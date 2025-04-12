@@ -1,3 +1,5 @@
+import React from 'react';
+
 function App() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 text-white font-sans">
