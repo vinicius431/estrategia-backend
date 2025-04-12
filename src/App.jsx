@@ -2,11 +2,14 @@ import React from 'react';
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 text-white font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0b1118] to-[#0d1b25] text-white font-sans">
       <div className="bg-white text-gray-800 p-10 rounded-2xl shadow-lg w-full max-w-md border border-blue-600">
-        <h1 className="text-3xl font-bold text-center mb-6 text-blue-700">
-          Estrateg<span className="text-blue-500">IA</span>
-        </h1>
+        <img
+          src="/logo.png"
+          alt="Logo EstrategIA"
+          className="mx-auto mb-6 w-32 h-auto"
+        />
+
         <p className="text-sm text-center text-gray-600 mb-6">
           Faça login na sua conta para continuar
         </p>
