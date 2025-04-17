@@ -5,7 +5,6 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Agendador from "./pages/Agendador";
 import Tutor from "./pages/Tutor";
-import IA from "./pages/IA";
 import Analise from "./pages/Analise";
 import Planos from "./pages/Planos";
 import Biblioteca from "./pages/Biblioteca";
@@ -26,7 +25,6 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Home />} />
           <Route path="agendador" element={<Agendador />} />
-          <Route path="ia" element={<IA />} />
           <Route path="analise" element={<Analise />} />
           <Route path="tutor" element={<Tutor />} />
           <Route path="planos" element={<Planos />} />

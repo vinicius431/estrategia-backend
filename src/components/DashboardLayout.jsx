@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import {
   Home,
   Calendar,
-  Sparkles,
   LineChart,
   GraduationCap,
   BadgeDollarSign,
@@ -30,7 +29,6 @@ export default function DashboardLayout() {
   const navItems = [
     { label: "Início", to: "/dashboard", icon: <Home size={18} /> },
     { label: "Agendador", to: "/dashboard/agendador", icon: <Calendar size={18} /> },
-    { label: "IA de Conteúdo", to: "/dashboard/ia", icon: <Sparkles size={18} /> },
     {
       label: "Análise Estratégica",
       to: "/dashboard/analise",
@@ -54,8 +52,8 @@ export default function DashboardLayout() {
       icon: <Image size={18} />
     },
     {
-      label: "Meus Conteúdos",
-      to: "/dashboard/meus-conteudos",
+      label: "Feed",
+      to: "/dashboard/feed",
       icon: <LayoutGrid size={18} />
     },
     {
