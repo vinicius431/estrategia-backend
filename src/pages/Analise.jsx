@@ -1,63 +1,98 @@
 import React, { useState } from "react";
 
 export default function Analise() {
-  const [url, setUrl] = useState("");
   const [imagem, setImagem] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [url, setUrl] = useState("");
   const [feedback, setFeedback] = useState("");
 
-  const analisarCampanha = (e) => {
-    e.preventDefault();
+  const handleImagem = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImagem(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
-    if (!url && !imagem) {
-      setFeedback("Por favor, insira uma URL ou envie uma imagem para análise.");
+  const analisar = () => {
+    if (!imagem && !url.trim()) {
+      setFeedback("Envie uma imagem ou uma URL para receber sugestões.");
       return;
     }
 
-    // Simulação de análise da IA
-    setFeedback(
-      `🧠 Sugestões Estratégicas:\n
-🔹 Copy: O título da landing page está genérico. Que tal usar algo mais direto como “Transforme sua rotina em 7 dias com X técnica”?  
-🔹 CTA: “Clique aqui” pode ser substituído por “Quero melhorar agora”.  
-🔹 Estrutura: Insira depoimentos antes do botão de ação para aumentar conversão.  
-🔹 Visual: Falta contraste entre o fundo e os botões.  
-\n⚙️ Versão real em breve com IA integrada.`
-    );
+    let base = "Análise gerada com base nas informações fornecidas:\n";
+
+    if (imagem) {
+      base += "- Imagem carregada: pode ser avaliada visualmente.\n";
+    }
+
+    if (url.trim()) {
+      base += `- URL: "${url}" aparenta estar no ar.\n`;
+      base += "- Sugestão: verifique se a página contém CTA visível, linguagem persuasiva e estrutura responsiva.\n";
+    }
+
+    base += "\n🔍 Dica extra: Certifique-se de que sua proposta de valor está clara nos primeiros 3 segundos.";
+
+    setFeedback(base);
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Análise Estratégica com IA</h1>
-      <p className="mb-6">Cole a URL da sua página ou envie uma imagem da campanha para obter sugestões de melhoria.</p>
+      <h1 className="text-2xl font-bold mb-4">Análise Estratégica</h1>
+      <p className="mb-6 text-gray-700">
+        Envie uma imagem ou cole a URL de sua landing page para receber sugestões de melhoria.
+      </p>
 
-      <form onSubmit={analisarCampanha} className="space-y-4 mb-6">
-        <input
-          type="text"
-          placeholder="https://exemplo.com/minha-pagina"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="w-full px-4 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImagem(e.target.files[0])}
-          className="block"
-        />
-
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200"
-        >
-          Analisar com IA
-        </button>
-      </form>
-
-      {feedback && (
-        <div className="bg-[#0d1b25] text-white p-4 rounded-md whitespace-pre-wrap shadow-md">
-          {feedback}
+      <div className="bg-[#0d1b25] p-6 rounded-xl shadow-md text-white space-y-4">
+        {/* Upload de Imagem */}
+        <div>
+          <label className="block mb-1">Imagem (opcional)</label>
+          <input type="file" accept="image/*" onChange={handleImagem} />
+          {preview && (
+            <div className="mt-3">
+              <p className="text-sm mb-1">Preview da Imagem:</p>
+              <img src={preview} alt="preview" className="max-w-xs rounded shadow-md" />
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Campo de URL */}
+        <div>
+          <label className="block mb-1">URL da sua página</label>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://exemplo.com"
+            className="w-full px-4 py-2 rounded-md border border-gray-300 text-black"
+          />
+          {url && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 text-blue-400 hover:underline text-sm"
+            >
+              Visualizar site ↗
+            </a>
+          )}
+        </div>
+
+        {/* Botão de Análise */}
+        <button
+          onClick={analisar}
+          className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
+        >
+          Analisar
+        </button>
+
+        {/* Feedback da análise */}
+        {feedback && (
+          <div className="mt-4 bg-white text-gray-800 p-4 rounded shadow">
+            <pre className="whitespace-pre-wrap text-sm">{feedback}</pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

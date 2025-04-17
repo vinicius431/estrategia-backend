@@ -1,143 +1,191 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function Agendador() {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  // Dados recebidos por URL (Tutor ou Central de Ideias)
+  const tituloParam = decodeURIComponent(searchParams.get("titulo") || "");
+  const descricaoParam = decodeURIComponent(searchParams.get("descricao") || "");
+  const ctaParam = decodeURIComponent(searchParams.get("cta") || "");
+  const hashtagsParam = decodeURIComponent(searchParams.get("hashtags") || "");
+
+  const [step, setStep] = useState(1);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [cta, setCta] = useState("");
+  const [hashtags, setHashtags] = useState("");
   const [data, setData] = useState("");
-  const [midia, setMidia] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [planoAtivo, setPlanoAtivo] = useState("Free");
-  const [agendamentos, setAgendamentos] = useState([]);
-
-  const limites = {
-    Free: 5,
-    Starter: 25,
-    Plus: 100,
-    Premium: Infinity
-  };
+  const [imagem, setImagem] = useState(null);
+  const [previewImg, setPreviewImg] = useState(null);
+  const [mensagem, setMensagem] = useState("");
 
   useEffect(() => {
-    const planoSalvo = localStorage.getItem("planoAtivo") || "Free";
-    setPlanoAtivo(planoSalvo);
+    setTitulo(tituloParam);
+    setDescricao(descricaoParam);
+    setCta(ctaParam);
+    setHashtags(hashtagsParam);
+  }, [tituloParam, descricaoParam, ctaParam, hashtagsParam]);
 
-    const agendamentosSalvos = JSON.parse(localStorage.getItem("agendamentos") || "[]");
-    setAgendamentos(agendamentosSalvos);
-
-    const tituloURL = searchParams.get("titulo");
-    const descricaoURL = searchParams.get("descricao");
-
-    if (tituloURL) setTitulo(decodeURIComponent(tituloURL));
-    if (descricaoURL) setDescricao(decodeURIComponent(descricaoURL));
-  }, [searchParams]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (agendamentos.length >= limites[planoAtivo]) {
-      toast.error("Limite de agendamentos atingido para seu plano.");
-      return;
+  const handleImagem = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImagem(file);
+      setPreviewImg(URL.createObjectURL(file));
     }
-
-    const novoAgendamento = {
-      titulo,
-      descricao,
-      data,
-      midia: midia?.name || "Sem mídia"
-    };
-
-    setLoading(true);
-
-    setTimeout(() => {
-      const novos = [...agendamentos, novoAgendamento];
-      localStorage.setItem("agendamentos", JSON.stringify(novos));
-      setAgendamentos(novos);
-      toast.success("✅ Agendamento salvo!");
-      setLoading(false);
-      setTitulo("");
-      setDescricao("");
-      setData("");
-      setMidia(null);
-    }, 1000);
   };
 
-  const limiteAtingido = agendamentos.length >= limites[planoAtivo];
+  const handleSubmit = async () => {
+    const novo = {
+      titulo,
+      descricao,
+      cta,
+      hashtags,
+      data,
+      imagem: previewImg || null,
+      criadoEm: new Date().toISOString(),
+    };
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Agendador de Conteúdo</h1>
-      <p className="mb-4 text-gray-700">
-        Você já agendou <strong>{agendamentos.length}</strong> de{" "}
-        <strong>{limites[planoAtivo] === Infinity ? "∞" : limites[planoAtivo]}</strong> permitidos no seu plano.
-      </p>
+    try {
+      const res = await fetch("http://localhost:3001/agendamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novo),
+      });
 
-      {limiteAtingido ? (
-        <div className="bg-red-50 border border-red-300 text-red-700 p-5 rounded-md">
-          <p className="mb-2 font-semibold">❌ Limite atingido</p>
-          <p className="mb-2">Você já usou todos os agendamentos permitidos pelo plano <strong>{planoAtivo}</strong>.</p>
-          <button
-            onClick={() => window.location.href = "/dashboard/planos"}
-            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Fazer upgrade de plano
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-md shadow-md border border-gray-200">
-          <div>
-            <label className="block mb-1 font-medium">Título do Post</label>
+      if (res.ok) {
+        setMensagem("✅ Agendamento realizado com sucesso!");
+        setStep(1);
+        setTitulo("");
+        setDescricao("");
+        setCta("");
+        setHashtags("");
+        setData("");
+        setImagem(null);
+        setPreviewImg(null);
+      } else {
+        const erro = await res.json();
+        setMensagem("❌ Erro ao agendar: " + erro.erro);
+      }
+    } catch (err) {
+      console.error(err);
+      setMensagem("❌ Erro ao conectar com o servidor.");
+    }
+  };
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold mb-2">1️⃣ Conteúdo</h2>
             <input
-              type="text"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border"
+              placeholder="Título do Post"
+              className="w-full px-4 py-2 rounded border text-black"
               required
             />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Descrição</label>
             <textarea
-              rows="4"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border"
-              required
-            ></textarea>
+              placeholder="Descrição"
+              rows={4}
+              className="w-full px-4 py-2 rounded border text-black"
+            />
+            <input
+              value={cta}
+              onChange={(e) => setCta(e.target.value)}
+              placeholder="CTA (ex: clique no link da bio)"
+              className="w-full px-4 py-2 rounded border text-black"
+            />
+            <input
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              placeholder="#hashtags separadas por espaço"
+              className="w-full px-4 py-2 rounded border text-black"
+            />
           </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Data de Publicação</label>
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold mb-2">2️⃣ Data e Imagem</h2>
             <input
               type="date"
               value={data}
               onChange={(e) => setData(e.target.value)}
-              className="px-4 py-2 rounded-md border"
+              className="w-full px-4 py-2 rounded border text-black"
               required
             />
+            <input type="file" accept="image/*" onChange={handleImagem} />
+            {previewImg && (
+              <img src={previewImg} alt="preview" className="max-w-xs rounded shadow-md mt-2" />
+            )}
           </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Mídia (imagem ou vídeo)</label>
-            <input
-              type="file"
-              onChange={(e) => setMidia(e.target.files[0])}
-              accept="image/*,video/*"
-              className="block"
-            />
+        );
+      case 3:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold mb-2">3️⃣ Preview Final</h2>
+            <div className="bg-white rounded-lg shadow p-4 text-black">
+              {previewImg && <img src={previewImg} alt="Preview" className="rounded mb-4" />}
+              <h3 className="text-lg font-bold">{titulo}</h3>
+              <p className="mb-2">{descricao}</p>
+              {cta && <p className="italic mb-1">👉 {cta}</p>}
+              {hashtags && (
+                <p className="text-blue-600 text-sm font-mono">{hashtags}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-2">Publicar em: {data || "sem data"}</p>
+            </div>
           </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-          >
-            {loading ? "Agendando..." : "Agendar Conteúdo"}
-          </button>
-        </form>
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Agendador de Conteúdo 📅</h1>
+
+      {mensagem && (
+        <div className="mb-4 p-3 rounded text-sm bg-blue-100 text-blue-800 border border-blue-300">
+          {mensagem}
+        </div>
       )}
+
+      <div className="bg-[#0d1b25] p-6 rounded-xl shadow-md text-white space-y-6">
+        {renderStep()}
+
+        <div className="flex justify-between">
+          {step > 1 && (
+            <button
+              onClick={() => setStep(step - 1)}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Voltar
+            </button>
+          )}
+
+          {step < 3 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            >
+              Próximo
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+            >
+              Agendar
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
