@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
-  Home,
-  Calendar,
-  LineChart,
-  GraduationCap,
-  BadgeDollarSign,
-  Menu,
-  X,
-  Wand2,
-  Image,
-  LayoutGrid,
-  Hash
+  Home, Calendar, LineChart, GraduationCap, BadgeDollarSign,
+  Menu, X, Wand2, Image, LayoutGrid, Hash, LogOut, RefreshCcw
 } from "lucide-react";
 
 export default function DashboardLayout() {
@@ -22,13 +13,65 @@ export default function DashboardLayout() {
   const [menuAberto, setMenuAberto] = useState(false);
 
   useEffect(() => {
-    const planoSalvo = localStorage.getItem("planoAtivo") || "Free";
-    setPlanoAtivo(planoSalvo);
+    const usuarioSalvo = localStorage.getItem("usuario");
+    if (usuarioSalvo) {
+      const usuario = JSON.parse(usuarioSalvo);
+      setPlanoAtivo(usuario.plano || "Free");
+    }
   }, []);
+
+  const recarregarPlano = async () => {
+    const usuarioStr = localStorage.getItem("usuario");
+    if (!usuarioStr) return toast.error("Usuário não encontrado.");
+
+    const usuario = JSON.parse(usuarioStr);
+
+    try {
+      const res = await fetch("http://localhost:3001/auth/recarregar-plano", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: usuario.email })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        usuario.plano = data.plano;
+        localStorage.setItem("usuario", JSON.stringify(usuario));
+        localStorage.setItem("planoAtivo", data.plano);
+        setPlanoAtivo(data.plano);
+        toast.success("Plano recarregado com sucesso!");
+      } else {
+        toast.error(data.erro || "Erro ao recarregar plano.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro de conexão.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    toast.success("Você saiu da sua conta.");
+    setTimeout(() => navigate("/"), 1000);
+  };
+
+  const handleUpgradeClick = () => {
+    toast.success("Redirecionando para os planos...");
+    setTimeout(() => navigate("/dashboard/planos"), 1000);
+  };
+
+  const agendamentosPermitidos = {
+    Free: 5,
+    Starter: 25,
+    Plus: 100,
+    Premium: Infinity
+  };
 
   const navItems = [
     { label: "Início", to: "/dashboard", icon: <Home size={18} /> },
     { label: "Agendador", to: "/dashboard/agendador", icon: <Calendar size={18} /> },
+    { label: "Central de Ideias", to: "/dashboard/central", icon: <Wand2 size={18} /> },
     {
       label: "Análise Estratégica",
       to: "/dashboard/analise",
@@ -42,46 +85,24 @@ export default function DashboardLayout() {
       disabled: planoAtivo === "Free" || planoAtivo === "Starter"
     },
     {
-      label: "Central de Ideias",
-      to: "/dashboard/central",
-      icon: <Wand2 size={18} />
+      label: "Biblioteca", to: "/dashboard/biblioteca", icon: <Image size={18} />
     },
     {
-      label: "Biblioteca",
-      to: "/dashboard/biblioteca",
-      icon: <Image size={18} />
+      label: "Hashtags", to: "/dashboard/hashtags", icon: <Hash size={18} />
     },
     {
-      label: "Feed",
-      to: "/dashboard/feed",
-      icon: <LayoutGrid size={18} />
+      label: "Meus Conteúdos", to: "/dashboard/meus-conteudos", icon: <LayoutGrid size={18} />
     },
     {
-      label: "Hashtags",
-      to: "/dashboard/hashtags",
-      icon: <Hash size={18} />
+      label: "Feed", to: "/dashboard/feed", icon: <LayoutGrid size={18} />
     },
     {
-      label: "Planos",
-      to: "/dashboard/planos",
-      icon: <BadgeDollarSign size={18} />,
-      badge: planoAtivo
+      label: "Planos", to: "/dashboard/planos", icon: <BadgeDollarSign size={18} />, badge: planoAtivo
+    },
+    {
+      label: "Sair", to: "#", icon: <LogOut size={18} />, action: handleLogout
     }
   ];
-
-  const handleUpgradeClick = () => {
-    toast.success("Redirecionando para os planos...");
-    setTimeout(() => {
-      navigate("/dashboard/planos");
-    }, 1000);
-  };
-
-  const agendamentosPermitidos = {
-    Free: 5,
-    Starter: 25,
-    Plus: 100,
-    Premium: Infinity
-  };
 
   return (
     <div className="flex min-h-screen text-gray-900 font-sans relative">
@@ -92,19 +113,18 @@ export default function DashboardLayout() {
         {menuAberto ? <X /> : <Menu />}
       </button>
 
-      <aside
-        className={`fixed z-20 inset-y-0 left-0 w-64 bg-[#0d1b25] text-white p-6 transform transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
-          menuAberto ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
+      <aside className={`fixed z-20 inset-y-0 left-0 w-64 bg-[#0d1b25] text-white p-6 transform transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${menuAberto ? "translate-x-0" : "-translate-x-full"}`}>
         <h2 className="text-2xl font-bold mb-8">EstrategIA</h2>
         <nav className="space-y-3">
           {navItems.map((item) => (
-            <Link
+            <button
               key={item.to}
-              to={item.to}
-              onClick={() => setMenuAberto(false)}
-              className={`flex items-center justify-between px-3 py-2 rounded-md transition ${
+              onClick={() => {
+                if (item.action) item.action();
+                else navigate(item.to);
+                setMenuAberto(false);
+              }}
+              className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-md transition ${
                 location.pathname === item.to ? "bg-blue-600" : "hover:bg-blue-600"
               } ${item.disabled ? "pointer-events-none opacity-40" : ""}`}
             >
@@ -117,7 +137,7 @@ export default function DashboardLayout() {
                   {item.badge}
                 </span>
               )}
-            </Link>
+            </button>
           ))}
         </nav>
 
@@ -127,6 +147,19 @@ export default function DashboardLayout() {
       </aside>
 
       <main className="flex-1 bg-white p-8 md:ml-64 w-full overflow-y-auto">
+        {/* Avatar e nome do usuário logado */}
+        {localStorage.getItem("usuario") && (
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full shadow text-sm text-gray-800 font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9.004 9.004 0 0112 15c2.21 0 4.21.806 5.879 2.136M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{JSON.parse(localStorage.getItem("usuario")).nome}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Faixa do plano e botão de upgrade */}
         <div className="mb-6 px-4 py-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm shadow-sm flex items-center justify-between">
           <span>
             Você está no plano <strong>{planoAtivo}</strong> — Agendamentos permitidos:{" "}
@@ -134,14 +167,22 @@ export default function DashboardLayout() {
               ? "Ilimitado"
               : agendamentosPermitidos[planoAtivo]}
           </span>
-          {planoAtivo === "Free" && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleUpgradeClick}
-              className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
+              onClick={recarregarPlano}
+              className="text-xs text-blue-700 hover:underline flex items-center gap-1"
             >
-              Fazer upgrade
+              <RefreshCcw size={14} /> Recarregar Plano
             </button>
-          )}
+            {planoAtivo === "Free" && (
+              <button
+                onClick={handleUpgradeClick}
+                className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
+              >
+                Fazer upgrade
+              </button>
+            )}
+          </div>
         </div>
 
         <Outlet />

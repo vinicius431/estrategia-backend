@@ -58,17 +58,42 @@ export default function Planos() {
     }
   ];
 
-  const confirmarTroca = (novoPlano) => {
+  const confirmarTroca = async (novoPlano) => {
     if (novoPlano === planoAtivo) {
       toast("Você já está nesse plano.");
       return;
     }
 
     const confirmar = window.confirm(`Tem certeza que deseja mudar para o plano ${novoPlano}?`);
-    if (confirmar) {
-      localStorage.setItem("planoAtivo", novoPlano);
-      setPlanoAtivo(novoPlano);
-      toast.success(`Plano ${novoPlano} ativado com sucesso!`);
+    if (!confirmar) return;
+
+    const usuarioStr = localStorage.getItem("usuario");
+    if (!usuarioStr) return;
+
+    const usuario = JSON.parse(usuarioStr);
+
+    try {
+      const res = await fetch("http://localhost:3001/auth/atualizar-plano", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: usuario.email, novoPlano }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        usuario.plano = data.plano;
+        localStorage.setItem("usuario", JSON.stringify(usuario));
+        localStorage.setItem("planoAtivo", data.plano);
+        setPlanoAtivo(data.plano);
+        toast.success(`Plano ${data.plano} ativado com sucesso!`);
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        toast.error(data.erro || "Erro ao atualizar o plano.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro de conexão.");
     }
   };
 

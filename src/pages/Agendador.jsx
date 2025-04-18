@@ -5,7 +5,6 @@ export default function Agendador() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
 
-  // Dados recebidos por URL (Tutor ou Central de Ideias)
   const tituloParam = decodeURIComponent(searchParams.get("titulo") || "");
   const descricaoParam = decodeURIComponent(searchParams.get("descricao") || "");
   const ctaParam = decodeURIComponent(searchParams.get("cta") || "");
@@ -37,21 +36,19 @@ export default function Agendador() {
   };
 
   const handleSubmit = async () => {
-    const novo = {
-      titulo,
-      descricao,
-      cta,
-      hashtags,
-      data,
-      imagem: previewImg || null,
-      criadoEm: new Date().toISOString(),
-    };
+    const formData = new FormData();
+    formData.append("titulo", titulo);
+    formData.append("descricao", descricao);
+    formData.append("cta", cta);
+    formData.append("hashtags", hashtags);
+    formData.append("data", data);
+    formData.append("imagem", imagem); // arquivo real
+    formData.append("criadoEm", new Date().toISOString());
 
     try {
       const res = await fetch("http://localhost:3001/agendamentos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(novo),
+        body: formData
       });
 
       if (res.ok) {
@@ -97,13 +94,13 @@ export default function Agendador() {
             <input
               value={cta}
               onChange={(e) => setCta(e.target.value)}
-              placeholder="CTA (ex: clique no link da bio)"
+              placeholder="CTA"
               className="w-full px-4 py-2 rounded border text-black"
             />
             <input
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
-              placeholder="#hashtags separadas por espaço"
+              placeholder="#hashtags"
               className="w-full px-4 py-2 rounded border text-black"
             />
           </div>
@@ -158,7 +155,6 @@ export default function Agendador() {
 
       <div className="bg-[#0d1b25] p-6 rounded-xl shadow-md text-white space-y-6">
         {renderStep()}
-
         <div className="flex justify-between">
           {step > 1 && (
             <button
@@ -168,7 +164,6 @@ export default function Agendador() {
               Voltar
             </button>
           )}
-
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
