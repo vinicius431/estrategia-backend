@@ -9,25 +9,49 @@ const frases = [
   "Uma headline poderosa vale por mil palavras.",
 ];
 
-// Simula uma geração com base no texto
-const gerarComBase = (input, tipo) => {
-  return Array.from({ length: 10 }, (_, i) => `${tipo} para "${input}" - Opção #${i + 1}`);
-};
+const fraseDoDia = frases[Math.floor(Math.random() * frases.length)];
 
 export default function CentralIdeias() {
   const [tema, setTema] = useState("");
   const [headlines, setHeadlines] = useState([]);
   const [descricoes, setDescricoes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState("");
   const [headlineSelecionada, setHeadlineSelecionada] = useState("");
   const [descricaoSelecionada, setDescricaoSelecionada] = useState("");
   const navigate = useNavigate();
 
-  const gerar = () => {
+  const gerar = async () => {
     if (!tema.trim()) return;
-    setHeadlines(gerarComBase(tema, "Headline"));
-    setDescricoes(gerarComBase(tema, "Descrição"));
-    setHeadlineSelecionada("");
-    setDescricaoSelecionada("");
+
+    setLoading(true);
+    setMensagem("");
+    setHeadlines([]);
+    setDescricoes([]);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/gerar-conteudo`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tema }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setHeadlines(data.headlines || []);
+        setDescricoes(data.descricoes || []);
+      } else {
+        setMensagem("❌ Erro: " + (data.erro || "Erro desconhecido"));
+      }
+    } catch (err) {
+      console.error(err);
+      setMensagem("❌ Erro de conexão com o servidor.");
+    }
+
+    setLoading(false);
   };
 
   const enviarParaAgendador = () => {
@@ -39,9 +63,7 @@ export default function CentralIdeias() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Central de Ideias ✨</h1>
-      <p className="mb-4 text-gray-700 italic">
-        {frases[Math.floor(Math.random() * frases.length)]}
-      </p>
+      <p className="mb-4 text-gray-700 italic">“{fraseDoDia}”</p>
 
       <div className="mb-6">
         <label className="block font-semibold mb-1">Sobre o que é seu conteúdo?</label>
@@ -54,11 +76,16 @@ export default function CentralIdeias() {
         />
         <button
           onClick={gerar}
+          disabled={loading}
           className="mt-3 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
         >
-          Gerar 10 Headlines e 10 Descrições
+          {loading ? "Gerando..." : "Gerar com IA"}
         </button>
       </div>
+
+      {mensagem && (
+        <div className="text-red-600 bg-red-100 p-3 rounded mb-4">{mensagem}</div>
+      )}
 
       {headlines.length > 0 && (
         <div className="grid md:grid-cols-2 gap-6">
