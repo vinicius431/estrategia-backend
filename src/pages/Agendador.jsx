@@ -42,13 +42,16 @@ export default function Agendador() {
     formData.append("cta", cta);
     formData.append("hashtags", hashtags);
     formData.append("data", data);
-    formData.append("imagem", imagem); // arquivo real
+    formData.append("imagem", imagem);
     formData.append("criadoEm", new Date().toISOString());
 
     try {
-      const res = await fetch("http://localhost:3001/agendamentos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos`, {
         method: "POST",
-        body: formData
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+        body: formData,
       });
 
       if (res.ok) {

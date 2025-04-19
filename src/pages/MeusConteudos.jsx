@@ -7,7 +7,11 @@ export default function MeusConteudos() {
   useEffect(() => {
     const fetchAgendados = async () => {
       try {
-        const res = await fetch("http://localhost:3001/agendamentos");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos`, {
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
+        });
         const data = await res.json();
         setConteudos(data.reverse());
       } catch (err) {
@@ -18,19 +22,20 @@ export default function MeusConteudos() {
     fetchAgendados();
   }, []);
 
-  const handleExcluir = async (index) => {
+  const handleExcluir = async (id) => {
     const confirmacao = confirm("Tem certeza que deseja excluir este agendamento?");
     if (!confirmacao) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/agendamentos/${index}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
       });
 
       if (res.ok) {
-        const novos = [...conteudos];
-        novos.splice(index, 1);
-        setConteudos(novos);
+        setConteudos((prev) => prev.filter((item) => item._id !== id));
       } else {
         const erro = await res.json();
         alert("Erro ao excluir: " + erro.erro);
@@ -64,9 +69,9 @@ export default function MeusConteudos() {
         <p className="text-gray-500">Nenhum conteúdo encontrado.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filtrados.map((item, index) => (
+          {filtrados.map((item) => (
             <div
-              key={index}
+              key={item._id}
               className="bg-white rounded-lg shadow-md overflow-hidden border"
             >
               {item.imagem && (
@@ -87,7 +92,7 @@ export default function MeusConteudos() {
                   <p className="text-sm text-gray-600 mb-3">{item.descricao}</p>
                 )}
                 <button
-                  onClick={() => handleExcluir(index)}
+                  onClick={() => handleExcluir(item._id)}
                   className="text-red-600 text-sm hover:underline"
                 >
                   Excluir
