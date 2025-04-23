@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
@@ -7,6 +7,13 @@ export default function Register() {
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const navigate = useNavigate();
+
+  // Preenche os campos automaticamente para teste
+  useEffect(() => {
+    setNome("Admin CEO");
+    setEmail("CEO@admin.com");
+    setSenha("12345");
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();

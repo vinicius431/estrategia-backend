@@ -27,7 +27,7 @@ export default function DashboardLayout() {
     const usuario = JSON.parse(usuarioStr);
 
     try {
-      const res = await fetch("http://localhost:3001/auth/recarregar-plano", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/recarregar-plano`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: usuario.email })
@@ -147,7 +147,6 @@ export default function DashboardLayout() {
       </aside>
 
       <main className="flex-1 bg-white p-8 md:ml-64 w-full overflow-y-auto">
-        {/* Avatar e nome do usuário logado */}
         {localStorage.getItem("usuario") && (
           <div className="flex justify-end mb-4">
             <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full shadow text-sm text-gray-800 font-medium">
@@ -159,7 +158,6 @@ export default function DashboardLayout() {
           </div>
         )}
 
-        {/* Faixa do plano e botão de upgrade */}
         <div className="mb-6 px-4 py-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm shadow-sm flex items-center justify-between">
           <span>
             Você está no plano <strong>{planoAtivo}</strong> — Agendamentos permitidos:{" "}

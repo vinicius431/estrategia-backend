@@ -73,7 +73,7 @@ export default function Planos() {
     const usuario = JSON.parse(usuarioStr);
 
     try {
-      const res = await fetch("http://localhost:3001/auth/atualizar-plano", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/atualizar-plano`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: usuario.email, novoPlano }),
