@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+const API_URL = "https://estrategia-backend-ss2a.onrender.com";
+
 export default function Agendador() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -43,13 +45,14 @@ export default function Agendador() {
     formData.append("hashtags", hashtags);
     formData.append("data", data);
     formData.append("imagem", imagem);
+    formData.append("status", "agendado"); // novo campo adicionado
     formData.append("criadoEm", new Date().toISOString());
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos`, {
+      const res = await fetch(`${API_URL}/agendamentos`, {
         method: "POST",
         headers: {
-          Authorization: localStorage.getItem("token"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: formData,
       });
