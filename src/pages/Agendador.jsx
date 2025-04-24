@@ -45,7 +45,7 @@ export default function Agendador() {
     formData.append("hashtags", hashtags);
     formData.append("data", data);
     formData.append("imagem", imagem);
-    formData.append("status", "agendado"); // novo campo adicionado
+    formData.append("status", "agendado");
     formData.append("criadoEm", new Date().toISOString());
 
     try {
