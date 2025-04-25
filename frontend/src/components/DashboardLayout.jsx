@@ -94,9 +94,6 @@ export default function DashboardLayout() {
       label: "Meus Conteúdos", to: "/dashboard/meus-conteudos", icon: <LayoutGrid size={18} />
     },
     {
-      label: "Feed", to: "/dashboard/feed", icon: <LayoutGrid size={18} />
-    },
-    {
       label: "Planos", to: "/dashboard/planos", icon: <BadgeDollarSign size={18} />, badge: planoAtivo
     },
     {
@@ -124,9 +121,7 @@ export default function DashboardLayout() {
                 else navigate(item.to);
                 setMenuAberto(false);
               }}
-              className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-md transition ${
-                location.pathname === item.to ? "bg-blue-600" : "hover:bg-blue-600"
-              } ${item.disabled ? "pointer-events-none opacity-40" : ""}`}
+              className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-md transition ${location.pathname === item.to ? "bg-blue-600" : "hover:bg-blue-600"} ${item.disabled ? "pointer-events-none opacity-40" : ""}`}
             >
               <div className="flex items-center gap-2">
                 {item.icon}

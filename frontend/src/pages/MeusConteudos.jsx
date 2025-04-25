@@ -9,11 +9,16 @@ export default function MeusConteudos() {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos`, {
           headers: {
-            Authorization: localStorage.getItem("token"),
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
         const data = await res.json();
-        setConteudos(data.reverse());
+
+        if (Array.isArray(data)) {
+          setConteudos(data.reverse());
+        } else {
+          console.error("Dados retornados não são um array:", data);
+        }
       } catch (err) {
         console.error("Erro ao buscar conteúdos:", err);
       }
@@ -30,7 +35,7 @@ export default function MeusConteudos() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/agendamentos/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: localStorage.getItem("token"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -88,6 +93,13 @@ export default function MeusConteudos() {
                 <p className="text-sm text-gray-500 mb-1">
                   Publicação em: {item.data}
                 </p>
+                {item.status && (
+                  <p className="text-xs mb-2">
+                    <span className={`inline-block px-2 py-1 rounded-full text-white text-[11px] font-semibold ${item.status === "agendado" ? "bg-blue-500" : "bg-green-500"}`}>
+                      {item.status.toUpperCase()}
+                    </span>
+                  </p>
+                )}
                 {item.descricao && (
                   <p className="text-sm text-gray-600 mb-3">{item.descricao}</p>
                 )}

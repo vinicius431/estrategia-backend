@@ -12,7 +12,6 @@ import Biblioteca from "./pages/Biblioteca";
 import Hashtags from "./pages/Hashtags";
 import CentralIdeias from "./pages/CentralIdeias";
 import MeusConteudos from "./pages/MeusConteudos";
-import Feed from "./pages/Feed";
 
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -45,7 +44,6 @@ function App() {
           <Route path="hashtags" element={<Hashtags />} />
           <Route path="meus-conteudos" element={<MeusConteudos />} />
           <Route path="central" element={<CentralIdeias />} />
-          <Route path="feed" element={<Feed />} />
         </Route>
       </Routes>
     </Router>

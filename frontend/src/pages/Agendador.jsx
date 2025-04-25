@@ -38,24 +38,31 @@ export default function Agendador() {
   };
 
   const handleSubmit = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMensagem("❌ Você precisa estar logado para agendar.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("titulo", titulo);
     formData.append("descricao", descricao);
     formData.append("cta", cta);
     formData.append("hashtags", hashtags);
     formData.append("data", data);
-    formData.append("imagem", imagem);
     formData.append("status", "agendado");
-    formData.append("criadoEm", new Date().toISOString());
+    if (imagem) formData.append("imagem", imagem);
 
     try {
       const res = await fetch(`${API_URL}/agendamentos`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
+
+      const resultado = await res.json();
 
       if (res.ok) {
         setMensagem("✅ Agendamento realizado com sucesso!");
@@ -68,13 +75,14 @@ export default function Agendador() {
         setImagem(null);
         setPreviewImg(null);
       } else {
-        const erro = await res.json();
-        setMensagem("❌ Erro ao agendar: " + erro.erro);
+        setMensagem("❌ Erro ao agendar: " + resultado.erro);
       }
     } catch (err) {
       console.error(err);
       setMensagem("❌ Erro ao conectar com o servidor.");
     }
+
+    setTimeout(() => setMensagem(""), 3000);
   };
 
   const renderStep = () => {
@@ -137,9 +145,7 @@ export default function Agendador() {
               <h3 className="text-lg font-bold">{titulo}</h3>
               <p className="mb-2">{descricao}</p>
               {cta && <p className="italic mb-1">👉 {cta}</p>}
-              {hashtags && (
-                <p className="text-blue-600 text-sm font-mono">{hashtags}</p>
-              )}
+              {hashtags && <p className="text-blue-600 text-sm font-mono">{hashtags}</p>}
               <p className="text-xs text-gray-500 mt-2">Publicar em: {data || "sem data"}</p>
             </div>
           </div>
