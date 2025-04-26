@@ -252,3 +252,4 @@ app.post("/gerar-conteudo", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Backend rodando na porta ${PORT}`);
 });
+
