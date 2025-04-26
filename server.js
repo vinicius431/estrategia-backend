@@ -15,10 +15,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS liberando apenas o domínio atual e localhost
+// ✅ CORS atualizado para aceitar o novo frontend
 const corsOptions = {
   origin: [
-    "https://frontend-definitivo-2sur.vercel.app",
+    "https://estrategia-frontend.vercel.app",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
