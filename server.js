@@ -15,16 +15,20 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS atualizado para aceitar o novo frontend
-const corsOptions = {
+// ✅ CORS corrigido
+app.use(cors({
   origin: [
     "https://estrategia-frontend.vercel.app",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-};
-app.use(cors(corsOptions));
+}));
+
+// ✅ Permitir também preflight requests (OPTIONS)
+app.options('*', cors());
+
 app.use(express.json());
 
 // Rota de teste
