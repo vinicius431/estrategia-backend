@@ -1,4 +1,3 @@
-// log atualizado
 const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
@@ -15,11 +14,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS ajustado
+// ✅ CORS atualizado com novo domínio da Vercel
 app.use((req, res, next) => {
-  const allowedOrigins = ["http://localhost:5173", "https://estrategia-frontend.vercel.app"];
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://estrategia-frontend.vercel.app",
+    "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app"
+  ];
   const origin = req.headers.origin;
-
   if (allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   }
@@ -39,7 +41,7 @@ app.get("/", (req, res) => {
   res.send("Servidor EstrategIA ativo");
 });
 
-// Conexão Mongo
+// Conexão MongoDB
 mongoose
   .connect(process.env.URL_MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("🟢 Conectado ao MongoDB Atlas"))
@@ -73,13 +75,9 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// POST /agendamentos
+// ROTAS DE AGENDAMENTO
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
-    console.log("📥 Requisição recebida em /agendamentos");
-    console.log("📄 Body:", req.body);
-    console.log("🖼️ File:", req.file);
-
     const { titulo, descricao, cta, hashtags, data, status } = req.body;
     const imagemUrl = req.file ? req.file.path : null;
 
@@ -102,7 +100,6 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
   }
 });
 
-// GET /agendamentos
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
@@ -113,7 +110,6 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
-// DELETE /agendamentos/:id
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);
@@ -128,7 +124,7 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   }
 });
 
-// POST /auth/register
+// ROTAS DE USUÁRIO
 app.post("/auth/register", async (req, res) => {
   const { nome, email, senha } = req.body;
   try {
@@ -146,7 +142,6 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-// POST /auth/login
 app.post("/auth/login", async (req, res) => {
   const { email, senha } = req.body;
   try {
@@ -172,7 +167,6 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
-// PUT /auth/atualizar-plano
 app.put("/auth/atualizar-plano", async (req, res) => {
   const { email, novoPlano } = req.body;
   try {
@@ -186,7 +180,6 @@ app.put("/auth/atualizar-plano", async (req, res) => {
   }
 });
 
-// POST /auth/recarregar-plano
 app.post("/auth/recarregar-plano", async (req, res) => {
   const { email } = req.body;
   try {
@@ -200,7 +193,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// POST /gerar-conteudo (IA)
+// ROTA DE IA
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
