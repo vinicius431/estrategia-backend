@@ -14,17 +14,26 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS manual configurado corretamente
+// ✅ CORS ajustado para aceitar localhost:5173 e vercel
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://estrategia-frontend.vercel.app");
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://estrategia-frontend.vercel.app"
+  ];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
-  
+
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // responde preflight
+    return res.sendStatus(200);
   }
-  
+
   next();
 });
 
@@ -252,4 +261,3 @@ app.post("/gerar-conteudo", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Backend rodando na porta ${PORT}`);
 });
-
