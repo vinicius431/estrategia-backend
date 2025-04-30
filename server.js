@@ -14,12 +14,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS ajustado para aceitar localhost:5173 e vercel
+// ✅ CORS ajustado
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "https://estrategia-frontend.vercel.app"
-  ];
+  const allowedOrigins = ["http://localhost:5173", "https://estrategia-frontend.vercel.app"];
   const origin = req.headers.origin;
 
   if (allowedOrigins.includes(origin)) {
@@ -30,10 +27,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
@@ -44,16 +38,13 @@ app.get("/", (req, res) => {
   res.send("Servidor EstrategIA ativo");
 });
 
-// Conexão com MongoDB
+// Conexão Mongo
 mongoose
-  .connect(process.env.URL_MONGO, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.URL_MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("🟢 Conectado ao MongoDB Atlas"))
   .catch((err) => console.error("🔴 Erro ao conectar no MongoDB:", err));
 
-// Middleware de autenticação com Bearer token
+// Middleware de autenticação
 function autenticarToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).json({ erro: "Token não fornecido" });
@@ -68,7 +59,7 @@ function autenticarToken(req, res, next) {
   });
 }
 
-// MODELO de Agendamento
+// Modelo de Agendamento
 const AgendamentoSchema = new mongoose.Schema({
   titulo: String,
   descricao: String,
@@ -81,7 +72,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// 🔧 ROTA DE AGENDAMENTO COM DEBUG
+// POST /agendamentos
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Requisição recebida em /agendamentos");
@@ -105,12 +96,12 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro ao salvar agendamento:", err);
+    console.error("❌ Erro ao salvar agendamento:", err.message, err.stack);
     res.status(500).json({ erro: "Erro ao salvar o agendamento." });
   }
 });
 
-// GET Agendamentos
+// GET /agendamentos
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
@@ -121,7 +112,7 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
-// DELETE Agendamento
+// DELETE /agendamentos/:id
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);
@@ -136,10 +127,9 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   }
 });
 
-// ROTAS DE USUÁRIO
+// POST /auth/register
 app.post("/auth/register", async (req, res) => {
   const { nome, email, senha } = req.body;
-
   try {
     const existe = await Usuario.findOne({ email });
     if (existe) return res.status(400).json({ erro: "Email já cadastrado." });
@@ -155,9 +145,9 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
+// POST /auth/login
 app.post("/auth/login", async (req, res) => {
   const { email, senha } = req.body;
-
   try {
     const usuario = await Usuario.findOne({ email });
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
@@ -181,31 +171,23 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
+// PUT /auth/atualizar-plano
 app.put("/auth/atualizar-plano", async (req, res) => {
   const { email, novoPlano } = req.body;
-
   try {
-    const usuario = await Usuario.findOneAndUpdate(
-      { email },
-      { plano: novoPlano },
-      { new: true }
-    );
-
+    const usuario = await Usuario.findOneAndUpdate({ email }, { plano: novoPlano }, { new: true });
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
-    res.json({
-      mensagem: "Plano atualizado com sucesso!",
-      plano: usuario.plano,
-    });
+    res.json({ mensagem: "Plano atualizado com sucesso!", plano: usuario.plano });
   } catch (err) {
     console.error(err);
     res.status(500).json({ erro: "Erro ao atualizar o plano." });
   }
 });
 
+// POST /auth/recarregar-plano
 app.post("/auth/recarregar-plano", async (req, res) => {
   const { email } = req.body;
-
   try {
     const usuario = await Usuario.findOne({ email });
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
@@ -217,7 +199,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// ROTA DE IA
+// POST /gerar-conteudo (IA)
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -232,14 +214,8 @@ app.post("/gerar-conteudo", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          {
-            role: "system",
-            content: "Você é um gerador de conteúdo de redes sociais.",
-          },
-          {
-            role: "user",
-            content: `Crie 10 títulos (headlines) e 10 descrições criativas para um post sobre: ${tema}.`,
-          },
+          { role: "system", content: "Você é um gerador de conteúdo de redes sociais." },
+          { role: "user", content: `Crie 10 títulos e 10 descrições criativas para: ${tema}` },
         ],
         temperature: 0.7,
       }),
@@ -249,12 +225,8 @@ app.post("/gerar-conteudo", async (req, res) => {
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
     const [parteHeadlines, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
-    const headlines = (parteHeadlines.match(/\d+\\.\\s.+/g) || []).map((l) =>
-      l.replace(/^\\d+\\.\\s*/, "")
-    );
-    const descricoes = (parteDescricoes?.match(/\d+\\.\\s.+/g) || []).map((l) =>
-      l.replace(/^\\d+\\.\\s*/, "")
-    );
+    const headlines = (parteHeadlines.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+    const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
 
     res.json({ headlines, descricoes });
   } catch (err) {
