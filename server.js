@@ -81,9 +81,13 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// ROTAS DE AGENDAMENTO
+// 🔧 ROTA DE AGENDAMENTO COM DEBUG
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
+    console.log("📥 Requisição recebida em /agendamentos");
+    console.log("📄 Body:", req.body);
+    console.log("🖼️ File:", req.file);
+
     const { titulo, descricao, cta, hashtags, data, status } = req.body;
     const imagemUrl = req.file ? req.file.path : null;
 
@@ -101,11 +105,12 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erro ao salvar agendamento:", err);
     res.status(500).json({ erro: "Erro ao salvar o agendamento." });
   }
 });
 
+// GET Agendamentos
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
@@ -116,6 +121,7 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
+// DELETE Agendamento
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);
@@ -243,11 +249,11 @@ app.post("/gerar-conteudo", async (req, res) => {
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
     const [parteHeadlines, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
-    const headlines = (parteHeadlines.match(/\d+\.\s.+/g) || []).map((l) =>
-      l.replace(/^\d+\.\s*/, "")
+    const headlines = (parteHeadlines.match(/\d+\\.\\s.+/g) || []).map((l) =>
+      l.replace(/^\\d+\\.\\s*/, "")
     );
-    const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) =>
-      l.replace(/^\d+\.\s*/, "")
+    const descricoes = (parteDescricoes?.match(/\d+\\.\\s.+/g) || []).map((l) =>
+      l.replace(/^\\d+\\.\\s*/, "")
     );
 
     res.json({ headlines, descricoes });
