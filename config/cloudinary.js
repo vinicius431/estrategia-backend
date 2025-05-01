@@ -8,11 +8,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
+// Agora aceita imagens E vídeos
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: "estrategia_uploads",
-    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  params: async (req, file) => {
+    const isVideo = file.mimetype.startsWith("video/");
+    return {
+      folder: "estrategia_uploads",
+      resource_type: isVideo ? "video" : "image",
+      allowed_formats: ["jpg", "png", "jpeg", "webp", "mp4", "mov", "avi"],
+    };
   },
 });
 

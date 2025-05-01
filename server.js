@@ -20,7 +20,7 @@ app.use((req, res, next) => {
     "http://localhost:5173",
     "https://estrategia-frontend.vercel.app",
     "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
-    "https://estrategia-frontend-nne9p9wob-vincius-nogueiras-projects.vercel.app" // <-- ADICIONADA AQUI
+    "https://estrategia-frontend-nne9p9wob-vincius-nogueiras-projects.vercel.app"
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -76,14 +76,14 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// POST /agendamentos
+// POST /agendamentos (com suporte a imagem ou vídeo)
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
-    console.log("🖼️ Imagem recebida:", req.file);
+    console.log("🖼️ Arquivo recebido:", req.file);
 
     const { titulo, descricao, cta, hashtags, data, status } = req.body;
-    const imagemUrl = req.file ? req.file.path : null;
+    const mediaUrl = req.file ? req.file.path : null;
 
     const novo = new Agendamento({
       titulo,
@@ -91,7 +91,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
       cta,
       hashtags,
       data,
-      imagem: imagemUrl,
+      imagem: mediaUrl,
       status: status || "agendado",
       criadoEm: new Date().toISOString(),
     });
