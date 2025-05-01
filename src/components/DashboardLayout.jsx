@@ -18,6 +18,15 @@ export default function DashboardLayout() {
       const usuario = JSON.parse(usuarioSalvo);
       setPlanoAtivo(usuario.plano || "Free");
     }
+
+    // ✅ Escuta de exclusão global
+    window.addEventListener("toast-excluir", () => {
+      toast.success("Conteúdo excluído com sucesso!");
+    });
+
+    return () => {
+      window.removeEventListener("toast-excluir", () => {});
+    };
   }, []);
 
   const recarregarPlano = async () => {

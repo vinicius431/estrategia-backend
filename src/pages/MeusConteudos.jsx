@@ -12,10 +12,12 @@ export default function MeusConteudos() {
             Authorization: localStorage.getItem("token"),
           },
         });
+
         const data = await res.json();
-        setConteudos(data.reverse());
+        console.log("📦 Conteúdos carregados:", data);
+        setConteudos(Array.isArray(data) ? data.reverse() : []);
       } catch (err) {
-        console.error("Erro ao buscar conteúdos:", err);
+        console.error("❌ Erro ao buscar conteúdos:", err);
       }
     };
 
@@ -35,19 +37,20 @@ export default function MeusConteudos() {
       });
 
       if (res.ok) {
+        console.log(`🗑️ Conteúdo ${id} excluído`);
         setConteudos((prev) => prev.filter((item) => item._id !== id));
       } else {
         const erro = await res.json();
         alert("Erro ao excluir: " + erro.erro);
       }
     } catch (err) {
-      console.error("Erro ao excluir:", err);
+      console.error("❌ Erro ao excluir:", err);
       alert("Erro ao conectar com o servidor.");
     }
   };
 
   const filtrados = conteudos.filter((item) =>
-    item.titulo.toLowerCase().includes(filtro.toLowerCase())
+    item.titulo?.toLowerCase().includes(filtro.toLowerCase())
   );
 
   return (
@@ -74,12 +77,16 @@ export default function MeusConteudos() {
               key={item._id}
               className="bg-white rounded-lg shadow-md overflow-hidden border"
             >
-              {item.imagem && (
+              {item.imagem ? (
                 <img
                   src={item.imagem}
                   alt="Post"
                   className="w-full h-48 object-cover"
                 />
+              ) : (
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                  Sem imagem
+                </div>
               )}
               <div className="p-4">
                 <h2 className="text-lg font-bold text-gray-800 mb-2">
@@ -89,14 +96,29 @@ export default function MeusConteudos() {
                   Publicação em: {item.data}
                 </p>
                 {item.descricao && (
-                  <p className="text-sm text-gray-600 mb-3">{item.descricao}</p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    {item.descricao.length > 100
+                      ? item.descricao.slice(0, 100) + "..."
+                      : item.descricao}
+                  </p>
                 )}
-                <button
-                  onClick={() => handleExcluir(item._id)}
-                  className="text-red-600 text-sm hover:underline"
-                >
-                  Excluir
-                </button>
+                <div className="flex justify-between items-center">
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      item.status === "agendado"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                  <button
+                    onClick={() => handleExcluir(item._id)}
+                    className="text-red-600 text-sm hover:underline"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </div>
             </div>
           ))}

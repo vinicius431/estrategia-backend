@@ -57,7 +57,10 @@ export default function Agendador() {
         body: formData,
       });
 
+      const data = await res.json();
+
       if (res.ok) {
+        console.log("✅ Sucesso:", data);
         setMensagem("✅ Agendamento realizado com sucesso!");
         setStep(1);
         setTitulo("");
@@ -68,11 +71,11 @@ export default function Agendador() {
         setImagem(null);
         setPreviewImg(null);
       } else {
-        const erro = await res.json();
-        setMensagem("❌ Erro ao agendar: " + erro.erro);
+        console.error("❌ Erro no agendamento:", data);
+        setMensagem("❌ Erro ao agendar: " + data.erro);
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Erro de conexão:", err);
       setMensagem("❌ Erro ao conectar com o servidor.");
     }
   };
