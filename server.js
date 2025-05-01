@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS atualizado com novo domínio da Vercel
+// ✅ CORS atualizado com nova URL de deploy da Vercel
 app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:5173",
@@ -41,7 +41,7 @@ app.get("/", (req, res) => {
   res.send("Servidor EstrategIA ativo");
 });
 
-// Conexão MongoDB
+// Conexão com MongoDB
 mongoose
   .connect(process.env.URL_MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("🟢 Conectado ao MongoDB Atlas"))
@@ -62,7 +62,7 @@ function autenticarToken(req, res, next) {
   });
 }
 
-// Modelo de Agendamento
+// MODELO de Agendamento
 const AgendamentoSchema = new mongoose.Schema({
   titulo: String,
   descricao: String,
