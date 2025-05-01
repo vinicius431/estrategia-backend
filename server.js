@@ -14,12 +14,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS atualizado com novo domínio da Vercel
+// ✅ CORS atualizado com nova URL da Vercel
 app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:5173",
     "https://estrategia-frontend.vercel.app",
-    "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app"
+    "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
+    "https://estrategia-frontend-nne9p9wob-vincius-nogueiras-projects.vercel.app" // <-- ADICIONADA AQUI
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
