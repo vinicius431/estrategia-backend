@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS atualizado com nova URL de deploy da Vercel
+// ✅ CORS atualizado com novo domínio da Vercel
 app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:5173",
@@ -75,9 +75,12 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// ROTAS DE AGENDAMENTO
+// POST /agendamentos
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
+    console.log("📥 Body recebido:", req.body);
+    console.log("🖼️ Imagem recebida:", req.file);
+
     const { titulo, descricao, cta, hashtags, data, status } = req.body;
     const imagemUrl = req.file ? req.file.path : null;
 
@@ -193,7 +196,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// ROTA DE IA
+// IA - gerar conteúdo
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
