@@ -70,6 +70,7 @@ const AgendamentoSchema = new mongoose.Schema({
   cta: String,
   hashtags: String,
   data: String,
+  hora: String, // <- novo campo
   imagem: String,
   status: String,
   criadoEm: String,
@@ -82,7 +83,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     console.log("📥 Body recebido:", req.body);
     console.log("🖼️ Arquivo recebido:", req.file);
 
-    const { titulo, descricao, cta, hashtags, data, status } = req.body;
+    const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
     const mediaUrl = req.file ? req.file.path : null;
 
     const novo = new Agendamento({
@@ -91,6 +92,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
       cta,
       hashtags,
       data,
+      hora,
       imagem: mediaUrl,
       status: status || "agendado",
       criadoEm: new Date().toISOString(),
