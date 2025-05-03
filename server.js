@@ -20,7 +20,7 @@ app.use((req, res, next) => {
     "http://localhost:5173",
     "https://estrategia-frontend.vercel.app",
     "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
-    "https://estrategia-frontend-oohkt1r4z-vincius-nogueiras-projects.vercel.app"
+    "https://estrategia-frontend-epdnsb6l1-vincius-nogueiras-projects.vercel.app"
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {

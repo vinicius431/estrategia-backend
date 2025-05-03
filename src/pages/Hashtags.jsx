@@ -1,16 +1,14 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Hashtags() {
   const [tema, setTema] = useState("");
   const [hashtags, setHashtags] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState("");
 
-  const gerarHashtags = async () => {
-    if (!tema.trim()) return;
-
+  const gerarHashtagsIA = async () => {
+    if (!tema.trim()) return toast.error("Digite um tema primeiro.");
     setLoading(true);
-    setErro("");
     setHashtags([]);
 
     try {
@@ -22,27 +20,30 @@ export default function Hashtags() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        setHashtags(data.hashtags || []);
-      } else {
-        setErro(data.erro || "Erro desconhecido.");
+      if (!res.ok || !data.hashtags) {
+        toast.error(data.erro || "Erro ao gerar hashtags com IA.");
+        return;
       }
-    } catch (err) {
-      setErro("Erro de conexão com o servidor.");
-      console.error(err);
-    }
 
-    setLoading(false);
+      const top5 = data.hashtags.slice(0, 5);
+      setHashtags(top5);
+      toast.success("Hashtags geradas com IA!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao conectar com a IA.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div>
       <h1 className="text-2xl font-bold mb-4">Gerador de Hashtags 🧠</h1>
       <p className="mb-4 text-gray-600">
-        Digite um tema ou palavra-chave e veja sugestões reais de hashtags geradas por IA para usar nos seus conteúdos.
+        Digite um tema e descubra hashtags personalizadas para seu conteúdo.
       </p>
 
-      <div className="space-y-4 bg-white border p-6 rounded-lg shadow-md">
+      <div className="space-y-4 bg-white border p-6 rounded-lg shadow-md max-w-lg">
         <input
           type="text"
           value={tema}
@@ -52,25 +53,27 @@ export default function Hashtags() {
         />
 
         <button
-          onClick={gerarHashtags}
+          onClick={gerarHashtagsIA}
           disabled={loading}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
         >
-          {loading ? "Gerando..." : "Gerar Hashtags"}
+          {loading ? "Gerando com IA..." : "Gerar com IA 🔮"}
         </button>
 
-        {erro && <p className="text-red-600">{erro}</p>}
+        <p className="text-sm text-gray-500 italic">
+          Aumente seu alcance com hashtags que estão bombando no seu nicho.
+        </p>
 
         {hashtags.length > 0 && (
-          <div className="space-y-2">
-            <p className="font-semibold text-gray-700">Sugestões da IA:</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-2 pt-4">
+            <p className="font-semibold text-gray-700">Sugestões:</p>
+            <div className="grid grid-cols-2 gap-2">
               {hashtags.map((tag, i) => (
                 <span
                   key={i}
                   className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium"
                 >
-                  #{tag.replace(/^#/, "")}
+                  {tag}
                 </span>
               ))}
             </div>
