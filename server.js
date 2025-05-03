@@ -129,7 +129,7 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   }
 });
 
-// ✅ PUT para editar (com ou sem nova imagem)
+// PUT
 app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     const { titulo, descricao, cta, hashtags, data, hora } = req.body;
@@ -226,7 +226,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// IA (versão segura)
+// IA
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -241,8 +241,14 @@ app.post("/gerar-conteudo", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "Você é um gerador de conteúdo de redes sociais." },
-          { role: "user", content: `Crie 10 títulos e 10 descrições criativas para: ${tema}` },
+          {
+            role: "system",
+            content: "Você é um especialista em marketing. Retorne exatamente neste formato:\n\nTítulos:\n1. ...\n2. ...\n...\n\nDescrições:\n1. ...\n2. ...\n...",
+          },
+          {
+            role: "user",
+            content: `Crie 10 títulos e 10 descrições criativas para o tema: ${tema}`,
+          },
         ],
         temperature: 0.7,
       }),
@@ -251,27 +257,17 @@ app.post("/gerar-conteudo", async (req, res) => {
     const data = await resposta.json();
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
-    console.log("🔍 RESPOSTA IA:", respostaIA);
+    const [parteTitulos, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
+    const headlines = (parteTitulos.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+    const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
 
-    let headlines = [];
-    let descricoes = [];
-
-    if (respostaIA.includes("Descrições:")) {
-      const [parteHeadlines, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
-      headlines = (parteHeadlines.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
-      descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
-    } else {
-      headlines = (respostaIA.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
-    }
-
-    if (headlines.length === 0 && descricoes.length === 0) {
+    if (!headlines.length || !descricoes.length) {
       return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável." });
     }
 
     res.json({ headlines, descricoes });
-
   } catch (err) {
-    console.error("❌ ERRO IA:", err);
+    console.error("ERRO IA:", err);
     res.status(500).json({ erro: "Erro ao gerar conteúdo com IA." });
   }
 });
