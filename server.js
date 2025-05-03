@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
-// ✅ CORS atualizado com nova URL da Vercel
+// ✅ CORS
 app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:5173",
@@ -37,18 +37,18 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Rota de teste
+// Teste
 app.get("/", (req, res) => {
   res.send("Servidor EstrategIA ativo");
 });
 
-// Conexão com MongoDB
+// MongoDB
 mongoose
   .connect(process.env.URL_MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("🟢 Conectado ao MongoDB Atlas"))
   .catch((err) => console.error("🔴 Erro ao conectar no MongoDB:", err));
 
-// Middleware de autenticação
+// Auth Middleware
 function autenticarToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).json({ erro: "Token não fornecido" });
@@ -63,7 +63,7 @@ function autenticarToken(req, res, next) {
   });
 }
 
-// MODELO de Agendamento
+// Agendamentos
 const AgendamentoSchema = new mongoose.Schema({
   titulo: String,
   descricao: String,
@@ -77,7 +77,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// POST /agendamentos (criar novo)
+// POST
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
@@ -98,45 +98,12 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro ao salvar agendamento:", err.message, err.stack);
+    console.error("❌ Erro ao salvar agendamento:", err.message);
     res.status(500).json({ erro: "Erro ao salvar o agendamento." });
   }
 });
 
-// PUT /agendamentos/:id (editar agendamento existente)
-app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
-  try {
-    const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
-    let imagemUrl = req.body.imagem || null;
-
-    if (req.file) {
-      imagemUrl = req.file.path;
-    }
-
-    const atualizado = await Agendamento.findByIdAndUpdate(
-      req.params.id,
-      {
-        titulo,
-        descricao,
-        cta,
-        hashtags,
-        data,
-        hora,
-        status,
-        imagem: imagemUrl,
-      },
-      { new: true }
-    );
-
-    if (!atualizado) return res.status(404).json({ erro: "Agendamento não encontrado." });
-
-    res.json({ mensagem: "Agendamento atualizado com sucesso!", agendamento: atualizado });
-  } catch (err) {
-    console.error("❌ Erro ao atualizar agendamento:", err);
-    res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
-  }
-});
-
+// GET
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
@@ -147,6 +114,7 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
+// DELETE
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);
@@ -161,7 +129,35 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   }
 });
 
-// ROTAS DE USUÁRIO
+// ✅ PUT para editar (com ou sem nova imagem)
+app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
+  try {
+    const { titulo, descricao, cta, hashtags, data, hora } = req.body;
+    const mediaUrl = req.file ? req.file.path : null;
+
+    const atualizacao = {
+      titulo,
+      descricao,
+      cta,
+      hashtags,
+      data,
+      hora,
+    };
+
+    if (mediaUrl) atualizacao.imagem = mediaUrl;
+
+    const atualizado = await Agendamento.findByIdAndUpdate(req.params.id, atualizacao, { new: true });
+
+    if (!atualizado) return res.status(404).json({ erro: "Agendamento não encontrado." });
+
+    res.json({ mensagem: "Agendamento atualizado com sucesso!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
+  }
+});
+
+// Usuário
 app.post("/auth/register", async (req, res) => {
   const { nome, email, senha } = req.body;
   try {
@@ -230,7 +226,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// IA - gerar conteúdo
+// IA
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
