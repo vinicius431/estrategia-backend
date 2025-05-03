@@ -256,8 +256,6 @@ app.post("/gerar-conteudo", async (req, res) => {
     });
 
     const data = await resposta.json();
-    console.log("🔄 RESPOSTA COMPLETA DA IA:", JSON.stringify(data, null, 2));
-
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
     const [parteTitulos, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
@@ -318,6 +316,55 @@ app.post("/gerar-hashtags", async (req, res) => {
   } catch (err) {
     console.error("❌ ERRO IA HASHTAGS:", err);
     res.status(500).json({ erro: "Erro ao gerar hashtags com IA." });
+  }
+});
+
+// IA: Modo Tutor (headline, descrição, CTA e hashtags)
+app.post("/gerar-tutor", async (req, res) => {
+  const { tema } = req.body;
+  if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+
+  try {
+    const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um tutor de marketing digital que ajuda criadores de conteúdo a criar posts virais. Gere exatamente:\n\n1 headline impactante,\n1 descrição curta e persuasiva,\n1 chamada para ação (CTA),\ne 5 hashtags populares e relacionadas.\n\nResponda com esse formato:\n\nHeadline: ...\nDescrição: ...\nCTA: ...\nHashtags:\n#tag1 #tag2 #tag3 #tag4 #tag5",
+          },
+          {
+            role: "user",
+            content: `Tema: ${tema}`,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await resposta.json();
+    const texto = data.choices?.[0]?.message?.content || "";
+
+    const headline = texto.match(/Headline:\s*(.+)/i)?.[1]?.trim() || "";
+    const descricao = texto.match(/Descrição:\s*(.+)/i)?.[1]?.trim() || "";
+    const cta = texto.match(/CTA:\s*(.+)/i)?.[1]?.trim() || "";
+    const hashtagsMatch = texto.match(/Hashtags:\s*(.+)/i)?.[1] || "";
+
+    const hashtags = hashtagsMatch
+      .split(/[\s,]+/)
+      .filter((tag) => tag.startsWith("#"))
+      .slice(0, 5);
+
+    res.json({ headline, descricao, cta, hashtags });
+  } catch (err) {
+    console.error("❌ ERRO IA TUTOR:", err);
+    res.status(500).json({ erro: "Erro ao gerar conteúdo do tutor com IA." });
   }
 });
 
