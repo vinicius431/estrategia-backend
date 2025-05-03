@@ -226,7 +226,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// IA
+// IA (versão segura)
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -251,13 +251,27 @@ app.post("/gerar-conteudo", async (req, res) => {
     const data = await resposta.json();
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
-    const [parteHeadlines, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
-    const headlines = (parteHeadlines.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
-    const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+    console.log("🔍 RESPOSTA IA:", respostaIA);
+
+    let headlines = [];
+    let descricoes = [];
+
+    if (respostaIA.includes("Descrições:")) {
+      const [parteHeadlines, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
+      headlines = (parteHeadlines.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+      descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+    } else {
+      headlines = (respostaIA.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
+    }
+
+    if (headlines.length === 0 && descricoes.length === 0) {
+      return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável." });
+    }
 
     res.json({ headlines, descricoes });
+
   } catch (err) {
-    console.error("ERRO IA:", err);
+    console.error("❌ ERRO IA:", err);
     res.status(500).json({ erro: "Erro ao gerar conteúdo com IA." });
   }
 });
