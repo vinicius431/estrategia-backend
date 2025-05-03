@@ -260,7 +260,7 @@ app.post("/gerar-conteudo", async (req, res) => {
     const headlines = (parteTitulos.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
     const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
 
-    if (!headlines.length || !descricoes.length) {
+    if (!headlines.length && !descricoes.length) {
       return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável. Tente outro tema mais direto." });
     }
 
@@ -347,7 +347,7 @@ app.post("/gerar-tutor", async (req, res) => {
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
 
-    console.log("🔍 RESPOSTA DA IA /gerar-tutor:", texto); // <-- ADICIONADO
+    console.log("🔍 RESPOSTA DA IA /gerar-tutor:", texto);
 
     const headline = texto.match(/Headline:\s*(.+)/i)?.[1]?.trim() || "";
     const descricao = texto.match(/Descrição:\s*(.+)/i)?.[1]?.trim() || "";
