@@ -20,6 +20,7 @@ app.use((req, res, next) => {
     "http://localhost:5173",
     "https://estrategia-frontend.vercel.app",
     "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
+    "https://estrategia-frontend-oohkt1r4z-vincius-nogueiras-projects.vercel.app",
     "https://estrategia-frontend-epdnsb6l1-vincius-nogueiras-projects.vercel.app"
   ];
   const origin = req.headers.origin;
@@ -63,7 +64,7 @@ function autenticarToken(req, res, next) {
   });
 }
 
-// Agendamentos
+// Agendamento Model
 const AgendamentoSchema = new mongoose.Schema({
   titulo: String,
   descricao: String,
@@ -77,7 +78,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// POST
+// CRUD Agendamentos
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
@@ -103,7 +104,6 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
   }
 });
 
-// GET
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
@@ -114,7 +114,6 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
-// DELETE
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);
@@ -129,7 +128,6 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   }
 });
 
-// PUT
 app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     const { titulo, descricao, cta, hashtags, data, hora } = req.body;
@@ -147,7 +145,6 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
     if (mediaUrl) atualizacao.imagem = mediaUrl;
 
     const atualizado = await Agendamento.findByIdAndUpdate(req.params.id, atualizacao, { new: true });
-
     if (!atualizado) return res.status(404).json({ erro: "Agendamento não encontrado." });
 
     res.json({ mensagem: "Agendamento atualizado com sucesso!" });
@@ -157,7 +154,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
   }
 });
 
-// Usuário
+// Auth
 app.post("/auth/register", async (req, res) => {
   const { nome, email, senha } = req.body;
   try {
@@ -257,13 +254,14 @@ app.post("/gerar-conteudo", async (req, res) => {
 
     const data = await resposta.json();
     const respostaIA = data.choices?.[0]?.message?.content || "";
+    console.log("🔍 RESPOSTA IA /gerar-conteudo:", respostaIA);
 
     const [parteTitulos, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
     const headlines = (parteTitulos.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
     const descricoes = (parteDescricoes?.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
 
     if (!headlines.length || !descricoes.length) {
-      return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável." });
+      return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável. Tente outro tema mais direto." });
     }
 
     res.json({ headlines, descricoes });
@@ -273,7 +271,7 @@ app.post("/gerar-conteudo", async (req, res) => {
   }
 });
 
-// IA: Gerar Hashtags
+// IA: Hashtags
 app.post("/gerar-hashtags", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -304,9 +302,7 @@ app.post("/gerar-hashtags", async (req, res) => {
 
     const data = await resposta.json();
     const respostaTexto = data.choices?.[0]?.message?.content || "";
-    const hashtags = respostaTexto
-      .match(/#[\w\u00C0-\u00FF]+/g)
-      ?.slice(0, 15) || [];
+    const hashtags = respostaTexto.match(/#[\w\u00C0-\u00FF]+/g)?.slice(0, 15) || [];
 
     if (!hashtags.length) {
       return res.status(400).json({ erro: "Não foi possível extrair hashtags." });
@@ -319,7 +315,7 @@ app.post("/gerar-hashtags", async (req, res) => {
   }
 });
 
-// IA: Modo Tutor (headline, descrição, CTA e hashtags)
+// IA: Tutor
 app.post("/gerar-tutor", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -351,6 +347,8 @@ app.post("/gerar-tutor", async (req, res) => {
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
 
+    console.log("🔍 RESPOSTA DA IA /gerar-tutor:", texto); // <-- ADICIONADO
+
     const headline = texto.match(/Headline:\s*(.+)/i)?.[1]?.trim() || "";
     const descricao = texto.match(/Descrição:\s*(.+)/i)?.[1]?.trim() || "";
     const cta = texto.match(/CTA:\s*(.+)/i)?.[1]?.trim() || "";
@@ -368,7 +366,7 @@ app.post("/gerar-tutor", async (req, res) => {
   }
 });
 
-// Iniciar servidor
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Backend rodando na porta ${PORT}`);
 });

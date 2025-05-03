@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const frases = [
   "Crie uma solução antes do problema surgir.",
@@ -22,12 +23,17 @@ export default function CentralIdeias() {
   const navigate = useNavigate();
 
   const gerar = async () => {
-    if (!tema.trim()) return;
+    if (!tema.trim()) {
+      toast.error("Digite um tema para gerar conteúdo.");
+      return;
+    }
 
     setLoading(true);
     setMensagem("");
     setHeadlines([]);
     setDescricoes([]);
+    setHeadlineSelecionada("");
+    setDescricaoSelecionada("");
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/gerar-conteudo`, {
@@ -40,18 +46,20 @@ export default function CentralIdeias() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        setHeadlines(data.headlines || []);
-        setDescricoes(data.descricoes || []);
-      } else {
-        setMensagem("❌ Erro: " + (data.erro || "Erro desconhecido"));
+      if (!res.ok || !data.headlines?.length || !data.descricoes?.length) {
+        console.error("❌ Erro IA:", data);
+        setMensagem("❌ A IA não retornou conteúdo utilizável.");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setMensagem("❌ Erro de conexão com o servidor.");
-    }
 
-    setLoading(false);
+      setHeadlines(data.headlines);
+      setDescricoes(data.descricoes);
+    } catch (err) {
+      console.error("❌ Erro de conexão:", err);
+      setMensagem("❌ Erro de conexão com o servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const enviarParaAgendador = () => {

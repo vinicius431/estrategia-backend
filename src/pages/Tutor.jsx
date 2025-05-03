@@ -30,19 +30,20 @@ export default function Tutor() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        toast.error(data.erro || "Erro ao gerar conteúdo.");
+      if (!res.ok || !data.headline || !data.descricao || !data.cta || !data.hashtags) {
+        console.error("🔴 Resposta da IA (inválida):", data);
+        toast.error(data.erro || "A IA não retornou conteúdo utilizável.");
         return;
       }
 
-      setTitulo(data.headline || "");
-      setDescricao(data.descricao || "");
-      setCta(data.cta || "");
-      setHashtagsSelecionadas(data.hashtags || []);
+      setTitulo(data.headline);
+      setDescricao(data.descricao);
+      setCta(data.cta);
+      setHashtagsSelecionadas(data.hashtags);
       toast.success("Sugestões geradas com IA!");
     } catch (err) {
-      console.error(err);
-      toast.error("Erro de conexão com a IA.");
+      console.error("❌ Erro de conexão com a IA:", err);
+      toast.error("Erro ao conectar com a IA.");
     } finally {
       setLoading(false);
     }
