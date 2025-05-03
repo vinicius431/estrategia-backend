@@ -21,6 +21,7 @@ app.use((req, res, next) => {
     "https://estrategia-frontend.vercel.app",
     "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
     "https://estrategia-frontend-d1q3r0mqt-vincius-nogueiras-projects.vercel.app"
+    "https://estrategia-frontend-oohkktj74-vincius-nogueiras-projects.vercel.app"
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
