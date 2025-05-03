@@ -70,19 +70,16 @@ const AgendamentoSchema = new mongoose.Schema({
   cta: String,
   hashtags: String,
   data: String,
-  hora: String, // <- novo campo
+  hora: String,
   imagem: String,
   status: String,
   criadoEm: String,
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// POST /agendamentos (com suporte a imagem ou vídeo)
+// POST /agendamentos (criar novo)
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
-    console.log("📥 Body recebido:", req.body);
-    console.log("🖼️ Arquivo recebido:", req.file);
-
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
     const mediaUrl = req.file ? req.file.path : null;
 
@@ -103,6 +100,40 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
   } catch (err) {
     console.error("❌ Erro ao salvar agendamento:", err.message, err.stack);
     res.status(500).json({ erro: "Erro ao salvar o agendamento." });
+  }
+});
+
+// PUT /agendamentos/:id (editar agendamento existente)
+app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
+  try {
+    const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
+    let imagemUrl = req.body.imagem || null;
+
+    if (req.file) {
+      imagemUrl = req.file.path;
+    }
+
+    const atualizado = await Agendamento.findByIdAndUpdate(
+      req.params.id,
+      {
+        titulo,
+        descricao,
+        cta,
+        hashtags,
+        data,
+        hora,
+        status,
+        imagem: imagemUrl,
+      },
+      { new: true }
+    );
+
+    if (!atualizado) return res.status(404).json({ erro: "Agendamento não encontrado." });
+
+    res.json({ mensagem: "Agendamento atualizado com sucesso!", agendamento: atualizado });
+  } catch (err) {
+    console.error("❌ Erro ao atualizar agendamento:", err);
+    res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
   }
 });
 
