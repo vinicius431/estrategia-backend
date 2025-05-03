@@ -243,7 +243,8 @@ app.post("/gerar-conteudo", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "Você é um especialista em marketing. Retorne exatamente neste formato:\n\nTítulos:\n1. ...\n2. ...\n...\n\nDescrições:\n1. ...\n2. ...\n...",
+            content:
+              "Você é um especialista em marketing digital. Responda exatamente com esse formato (sem textos extras):\n\nTítulos:\n1. ...\n2. ...\n...\n\nDescrições:\n1. ...\n2. ...\n...",
           },
           {
             role: "user",
@@ -255,6 +256,8 @@ app.post("/gerar-conteudo", async (req, res) => {
     });
 
     const data = await resposta.json();
+    console.log("🔄 RESPOSTA COMPLETA DA IA:", JSON.stringify(data, null, 2));
+
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
     const [parteTitulos, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
@@ -267,8 +270,8 @@ app.post("/gerar-conteudo", async (req, res) => {
 
     res.json({ headlines, descricoes });
   } catch (err) {
-    console.error("ERRO IA:", err);
-    res.status(500).json({ erro: "Erro ao gerar conteúdo com IA." });
+    console.error("❌ ERRO IA DETALHADO:", err);
+    res.status(500).json({ erro: err.message || "Erro ao gerar conteúdo com IA." });
   }
 });
 
