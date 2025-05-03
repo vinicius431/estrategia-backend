@@ -226,7 +226,7 @@ app.post("/auth/recarregar-plano", async (req, res) => {
   }
 });
 
-// IA
+// IA: Gerar conteúdo
 app.post("/gerar-conteudo", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
@@ -272,6 +272,52 @@ app.post("/gerar-conteudo", async (req, res) => {
   } catch (err) {
     console.error("❌ ERRO IA DETALHADO:", err);
     res.status(500).json({ erro: err.message || "Erro ao gerar conteúdo com IA." });
+  }
+});
+
+// IA: Gerar Hashtags
+app.post("/gerar-hashtags", async (req, res) => {
+  const { tema } = req.body;
+  if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+
+  try {
+    const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um gerador de hashtags populares e atualizadas no Instagram. Responda apenas com uma lista de hashtags relevantes e atuais para o tema enviado.",
+          },
+          {
+            role: "user",
+            content: `Gere 15 hashtags atuais e populares para o tema: ${tema}`,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await resposta.json();
+    const respostaTexto = data.choices?.[0]?.message?.content || "";
+    const hashtags = respostaTexto
+      .match(/#[\w\u00C0-\u00FF]+/g)
+      ?.slice(0, 15) || [];
+
+    if (!hashtags.length) {
+      return res.status(400).json({ erro: "Não foi possível extrair hashtags." });
+    }
+
+    res.json({ hashtags });
+  } catch (err) {
+    console.error("❌ ERRO IA HASHTAGS:", err);
+    res.status(500).json({ erro: "Erro ao gerar hashtags com IA." });
   }
 });
 

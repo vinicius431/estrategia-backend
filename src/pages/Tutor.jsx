@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Tutor() {
   const navigate = useNavigate();
@@ -9,33 +10,42 @@ export default function Tutor() {
   const [descricao, setDescricao] = useState("");
   const [cta, setCta] = useState("");
   const [hashtagsSelecionadas, setHashtagsSelecionadas] = useState([]);
-  const todasHashtags = [
-    "#marketingdigital",
-    "#negocios",
-    "#empreendedorismo",
-    "#conteudointeligente",
-    "#estrategia",
-    "#produtividade",
-    "#sucesso",
-    "#foco",
-    "#instagram",
-    "#branding"
-  ];
+  const [loading, setLoading] = useState(false);
 
-  const gerarIdeias = () => {
-    if (!tema.trim()) return;
+  const gerarIdeias = async () => {
+    if (!tema.trim()) return toast.error("Digite um tema.");
 
-    // Geração automática simulada (poderá ser IA futuramente)
-    const ideia = tema.trim();
+    setLoading(true);
+    setTitulo("");
+    setDescricao("");
+    setCta("");
+    setHashtagsSelecionadas([]);
 
-    setTitulo(`Como aplicar ${ideia} de forma eficaz`);
-    setDescricao(`Descubra como usar ${ideia} no seu dia a dia para gerar mais resultados, engajamento e crescimento no digital.`);
-    setCta(`Clique no link da bio e aprenda a dominar ${ideia}!`);
-    setHashtagsSelecionadas(
-      todasHashtags
-        .filter((tag) => tag.toLowerCase().includes(ideia.toLowerCase().split(" ")[0]))
-        .slice(0, 5)
-    );
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/gerar-tutor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tema }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.erro || "Erro ao gerar conteúdo.");
+        return;
+      }
+
+      setTitulo(data.headline || "");
+      setDescricao(data.descricao || "");
+      setCta(data.cta || "");
+      setHashtagsSelecionadas(data.hashtags || []);
+      toast.success("Sugestões geradas com IA!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro de conexão com a IA.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleHashtag = (tag) => {
@@ -72,9 +82,10 @@ export default function Tutor() {
         />
         <button
           onClick={gerarIdeias}
+          disabled={loading}
           className="mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
         >
-          Gerar sugestões
+          {loading ? "Gerando..." : "Gerar sugestões com IA"}
         </button>
       </div>
 
@@ -111,7 +122,7 @@ export default function Tutor() {
       <div>
         <label className="block font-semibold mb-2">Hashtags</label>
         <div className="flex flex-wrap gap-2">
-          {todasHashtags.map((tag) => (
+          {hashtagsSelecionadas.map((tag) => (
             <button
               key={tag}
               onClick={() => toggleHashtag(tag)}
