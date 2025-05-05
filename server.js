@@ -36,9 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ ESSA LINHA AQUI FAZ O AGENDAMENTO FUNCIONAR COM ARQUIVOS
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.json());
 
 // Teste
@@ -81,14 +79,20 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// CRUD Agendamentos
+// ✅ ROTA CORRIGIDA AQUI
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
     console.log("📁 Arquivo recebido:", req.file);
 
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
-    const mediaUrl = req.file ? req.file.path : null;
+
+    let mediaUrl = null;
+    if (req.file && req.file.path) {
+      mediaUrl = req.file.path;
+    } else {
+      console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
+    }
 
     const novo = new Agendamento({
       titulo,
@@ -105,8 +109,8 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro ao salvar agendamento:", err.message);
-    res.status(500).json({ erro: "Erro ao salvar o agendamento." });
+    console.error("❌ ERRO INTERNO DETALHADO:", err);
+    res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
   }
 });
 
