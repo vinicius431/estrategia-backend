@@ -36,6 +36,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ ESSA LINHA AQUI FAZ O AGENDAMENTO FUNCIONAR COM ARQUIVOS
+app.use(express.urlencoded({ extended: true }));
+
 app.use(express.json());
 
 // Teste
@@ -257,7 +260,6 @@ app.post("/gerar-conteudo", async (req, res) => {
 
     const data = await resposta.json();
     const respostaIA = data.choices?.[0]?.message?.content || "";
-    console.log("🔍 RESPOSTA IA /gerar-conteudo:", respostaIA);
 
     const [parteTitulos, parteDescricoes] = respostaIA.split(/Descri[çc]ões:/i);
     const headlines = (parteTitulos.match(/\d+\.\s.+/g) || []).map((l) => l.replace(/^\d+\.\s*/, ""));
@@ -269,7 +271,6 @@ app.post("/gerar-conteudo", async (req, res) => {
 
     res.json({ headlines, descricoes });
   } catch (err) {
-    console.error("❌ ERRO IA DETALHADO:", err);
     res.status(500).json({ erro: err.message || "Erro ao gerar conteúdo com IA." });
   }
 });
@@ -313,7 +314,6 @@ app.post("/gerar-hashtags", async (req, res) => {
 
     res.json({ hashtags });
   } catch (err) {
-    console.error("❌ ERRO IA HASHTAGS:", err);
     res.status(500).json({ erro: "Erro ao gerar hashtags com IA." });
   }
 });
@@ -350,8 +350,6 @@ app.post("/gerar-tutor", async (req, res) => {
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
 
-    console.log("🔍 RESPOSTA DA IA /gerar-tutor:", texto);
-
     const headline = texto.match(/Headline:\s*(.+)/i)?.[1]?.trim() || "";
     const descricao = texto.match(/Descrição:\s*(.+)/i)?.[1]?.trim() || "";
     const cta = texto.match(/CTA:\s*(.+)/i)?.[1]?.trim() || "";
@@ -364,7 +362,6 @@ app.post("/gerar-tutor", async (req, res) => {
 
     res.json({ headline, descricao, cta, hashtags });
   } catch (err) {
-    console.error("❌ ERRO IA TUTOR:", err);
     res.status(500).json({ erro: "Erro ao gerar conteúdo do tutor com IA." });
   }
 });
