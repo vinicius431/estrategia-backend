@@ -81,6 +81,9 @@ const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 // CRUD Agendamentos
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
+    console.log("📥 Body recebido:", req.body);
+    console.log("📁 Arquivo recebido:", req.file);
+
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
     const mediaUrl = req.file ? req.file.path : null;
 
