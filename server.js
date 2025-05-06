@@ -36,8 +36,8 @@ app.use((req, res, next) => {
   next();
 });
 
+// ⚠️ Express.urlencoded vem antes
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
 // Teste
 app.get("/", (req, res) => {
@@ -79,7 +79,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// ✅ ROTA DE AGENDAMENTO ATUALIZADA
+// ✅ ROTA CORRIGIDA AQUI
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
@@ -163,6 +163,9 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
     res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
   }
 });
+
+// Agora sim, o express.json() é carregado após as rotas com upload
+app.use(express.json());
 
 // Auth
 app.post("/auth/register", async (req, res) => {
