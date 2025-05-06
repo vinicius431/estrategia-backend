@@ -36,7 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ Express.urlencoded vem antes
+// ⚠️ Ordem correta dos parsers
 app.use(express.urlencoded({ extended: true }));
 
 // Teste
@@ -164,7 +164,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
   }
 });
 
-// Agora sim, o express.json() é carregado após as rotas com upload
+// ⚠️ Agora sim, depois das rotas com multer
 app.use(express.json());
 
 // Auth

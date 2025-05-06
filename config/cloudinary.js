@@ -8,7 +8,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-// Agora aceita imagens E vídeos
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
