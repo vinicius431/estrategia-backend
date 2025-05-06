@@ -79,7 +79,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// ✅ ROTA CORRIGIDA AQUI
+// ✅ ROTA DE AGENDAMENTO ATUALIZADA
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
