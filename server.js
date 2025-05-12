@@ -79,7 +79,7 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
-// ✅ ROTA CORRIGIDA AQUI
+
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
@@ -88,11 +88,21 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
 
     let mediaUrl = null;
-    if (req.file && req.file.path) {
-      mediaUrl = req.file.path;
-    } else {
-      console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
-    }
+if (req.file) {
+  try {
+    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+      folder: "estrategia",
+      resource_type: "auto", // Suporta imagem e vídeo
+    });
+    mediaUrl = uploadResult.secure_url;
+    console.log("✅ URL pública do Cloudinary:", mediaUrl);
+  } catch (err) {
+    console.error("❌ Erro no upload para o Cloudinary:", err.message);
+  }
+} else {
+  console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
+}
+
 
     const novo = new Agendamento({
       titulo,
