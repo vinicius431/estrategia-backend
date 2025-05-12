@@ -44,7 +44,9 @@ export default function Agendador() {
     formData.append("cta", cta);
     formData.append("hashtags", hashtags);
     formData.append("data", data);
-    formData.append("imagem", imagem);
+    if (imagem) {
+      formData.append("imagem", imagem);
+    }
     formData.append("status", "agendado");
     formData.append("criadoEm", new Date().toISOString());
 

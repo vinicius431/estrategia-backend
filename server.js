@@ -83,27 +83,31 @@ const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
-    console.log("📁 Arquivo recebido:", req.file);
+    console.log("📁 Arquivo recebido:", JSON.stringify(req.file, null, 2));
 
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
 
     let mediaUrl = null;
-if (req.file) {
-  try {
-    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-      folder: "estrategia",
-      resource_type: "auto", // Suporta imagem e vídeo
-    });
-    mediaUrl = uploadResult.secure_url;
-    console.log("✅ URL pública do Cloudinary:", mediaUrl);
-  } catch (err) {
-    console.error("❌ Erro no upload para o Cloudinary:", err.message);
-  }
-} else {
-  console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
-}
-
-
+    if (req.file) {
+      try {
+        console.log("📂 Caminho do arquivo para upload:", req.file.path);
+        console.log("📁 Tipo MIME do arquivo:", req.file.mimetype);
+        console.log("🔍 Arquivo completo:", JSON.stringify(req.file, null, 2));
+    
+        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+          folder: "estrategia",
+          resource_type: "auto", // Suporta imagem e vídeo
+        });
+    
+        mediaUrl = uploadResult.secure_url;
+        console.log("✅ URL pública do Cloudinary:", mediaUrl);
+      } catch (err) {
+        console.error("❌ Erro no upload para o Cloudinary:", err.message, err.stack);
+      }
+    } else {
+      console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
+    }
+    
     const novo = new Agendamento({
       titulo,
       descricao,
@@ -119,7 +123,7 @@ if (req.file) {
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ ERRO INTERNO DETALHADO:", err);
+    console.error("❌ Erro no upload para o Cloudinary:", err.message, err.stack);
     res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
   }
 });
@@ -174,7 +178,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
   }
 });
 
-// ⚠️ Agora sim, depois das rotas com multer
+
 app.use(express.json());
 
 // Auth
