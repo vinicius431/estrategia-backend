@@ -104,7 +104,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
         mediaUrl = uploadResult.secure_url;
         console.log("✅ URL pública do Cloudinary:", mediaUrl);
       } catch (err) {
-        console.error("❌ Erro ao fazer upload no Cloudinary:", err.message);
+        console.error("❌ Erro ao fazer upload no Cloudinary:", err?.message || err);
         return res.status(500).json({ erro: "Erro ao fazer upload no Cloudinary." });
       }
     } else {
@@ -127,7 +127,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro ao salvar o agendamento:", err.message);
+    console.error("❌ Erro ao salvar o agendamento:", err?.message || JSON.stringify(err, null, 2));
     res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
   }
 });
@@ -137,7 +137,7 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
     res.json(lista);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
     res.status(500).json({ erro: "Erro ao buscar os agendamentos." });
   }
 });
@@ -151,7 +151,7 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
       res.status(404).json({ erro: "Agendamento não encontrado." });
     }
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
     res.status(500).json({ erro: "Erro ao excluir o agendamento." });
   }
 });
@@ -177,7 +177,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
 
     res.json({ mensagem: "Agendamento atualizado com sucesso!" });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
     res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
   }
 });
