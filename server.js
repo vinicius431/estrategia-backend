@@ -88,26 +88,47 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
 
     let mediaUrl = null;
+
     if (req.file) {
       try {
         console.log("📂 Caminho do arquivo para upload:", req.file.path);
         console.log("📁 Tipo MIME do arquivo:", req.file.mimetype);
         console.log("🔍 Arquivo completo:", JSON.stringify(req.file, null, 2));
-    
-        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-          folder: "estrategia",
-          resource_type: "auto", // Suporta imagem e vídeo
-        });
-    
-        mediaUrl = uploadResult.secure_url;
-        console.log("✅ URL pública do Cloudinary:", mediaUrl);
+
+        // Verificando se o arquivo está como buffer
+        if (req.file.buffer) {
+          console.log("✅ Arquivo recebido como buffer");
+        } else {
+          console.warn("⚠️ Arquivo não está em formato buffer");
+        }
+
+        // Upload para Cloudinary usando buffer diretamente
+        const uploadResult = await cloudinary.uploader.upload_stream(
+          {
+            folder: "estrategia",
+            resource_type: "auto", // Suporte a imagem e vídeo
+            public_id: `${Date.now()}-${req.file.originalname}`,
+          },
+          (error, result) => {
+            if (error) {
+              console.error("❌ Erro no upload para o Cloudinary:", error.message);
+              throw error;
+            }
+            mediaUrl = result.secure_url;
+            console.log("✅ URL pública do Cloudinary:", mediaUrl);
+          }
+        );
+        
+        uploadResult.end(req.file.buffer);
+
       } catch (err) {
         console.error("❌ Erro no upload para o Cloudinary:", err.message, err.stack);
+        return res.status(500).json({ erro: "Erro ao enviar mídia para o Cloudinary." });
       }
     } else {
       console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
     }
-    
+
     const novo = new Agendamento({
       titulo,
       descricao,
@@ -123,7 +144,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro no upload para o Cloudinary:", err.message, err.stack);
+    console.error("❌ Erro interno no servidor:", err.message, err.stack);
     res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
   }
 });
