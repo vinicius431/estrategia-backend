@@ -95,22 +95,11 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     if (req.file) {
       try {
         // Upload via stream (usando buffer do arquivo)
-        const uploadResult = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            {
-              folder: "estrategia_uploads",
-              resource_type: "auto", // Aceita imagem e vídeo
-            },
-            (error, result) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            }
-          );
-          stream.end(req.file.buffer); // Envia o buffer para o stream
-        });
+       const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+  folder: "estrategia_uploads",
+  resource_type: "auto",
+});
+
 
         mediaUrl = uploadResult.secure_url;
         console.log("✅ URL pública do Cloudinary:", mediaUrl);
