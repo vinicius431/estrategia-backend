@@ -7,7 +7,11 @@ const fetch = require("node-fetch");
 require("dotenv").config();
 
 const { cloudinary, storage } = require("./config/cloudinary");
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+});
+
 const Usuario = require("./models/Usuario");
 
 const app = express();
@@ -36,8 +40,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ Ordem correta dos parsers
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Teste
 app.get("/", (req, res) => {
