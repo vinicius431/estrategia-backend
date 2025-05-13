@@ -104,7 +104,8 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
         mediaUrl = uploadResult.secure_url;
         console.log("✅ URL pública do Cloudinary:", mediaUrl);
       } catch (err) {
-        console.error("❌ Erro ao fazer upload no Cloudinary:", err?.message || err);
+        console.error("❌ Erro ao fazer upload no Cloudinary:");
+console.error(JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
         return res.status(500).json({ erro: "Erro ao fazer upload no Cloudinary." });
       }
     } else {
