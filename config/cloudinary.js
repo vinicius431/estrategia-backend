@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
     const isVideo = file.mimetype.startsWith("video/");
     return {
       folder: "estrategia_uploads",
-      resource_type: isVideo ? "video" : "image",
+      resource_type: "auto", // Suporta imagem e vídeo
       allowed_formats: ["jpg", "jpeg", "png", "webp", "mp4", "mov", "avi", "mkv"],
       public_id: `${Date.now()}-${file.originalname}`, // Nome único para cada arquivo
     };

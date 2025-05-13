@@ -83,50 +83,40 @@ const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     console.log("📥 Body recebido:", req.body);
-    console.log("📁 Arquivo recebido:", JSON.stringify(req.file, null, 2));
+    console.log("📁 Arquivo recebido:", req.file);
 
     const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
 
     let mediaUrl = null;
-
     if (req.file) {
       try {
-        console.log("📂 Caminho do arquivo para upload:", req.file.path);
-        console.log("📁 Tipo MIME do arquivo:", req.file.mimetype);
-        console.log("🔍 Arquivo completo:", JSON.stringify(req.file, null, 2));
-
-        // Verificando se o arquivo está como buffer
-        if (req.file.buffer) {
-          console.log("✅ Arquivo recebido como buffer");
-        } else {
-          console.warn("⚠️ Arquivo não está em formato buffer");
-        }
-
-        // Upload para Cloudinary usando buffer diretamente
-        const uploadResult = await cloudinary.uploader.upload_stream(
-          {
-            folder: "estrategia",
-            resource_type: "auto", // Suporte a imagem e vídeo
-            public_id: `${Date.now()}-${req.file.originalname}`,
-          },
-          (error, result) => {
-            if (error) {
-              console.error("❌ Erro no upload para o Cloudinary:", error.message);
-              throw error;
+        // Upload via stream (usando buffer do arquivo)
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "estrategia_uploads",
+              resource_type: "auto", // Aceita imagem e vídeo
+            },
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
             }
-            mediaUrl = result.secure_url;
-            console.log("✅ URL pública do Cloudinary:", mediaUrl);
-          }
-        );
-        
-        uploadResult.end(req.file.buffer);
+          );
+          stream.end(req.file.buffer); // Envia o buffer para o stream
+        });
 
+        mediaUrl = uploadResult.secure_url;
+        console.log("✅ URL pública do Cloudinary:", mediaUrl);
       } catch (err) {
-        console.error("❌ Erro no upload para o Cloudinary:", err.message, err.stack);
-        return res.status(500).json({ erro: "Erro ao enviar mídia para o Cloudinary." });
+        console.error("❌ Erro ao fazer upload no Cloudinary:", err.message);
+        return res.status(500).json({ erro: "Erro ao fazer upload no Cloudinary." });
       }
     } else {
       console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
+      return res.status(400).json({ erro: "Nenhuma mídia foi enviada." });
     }
 
     const novo = new Agendamento({
@@ -144,7 +134,7 @@ app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, 
     await novo.save();
     res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro interno no servidor:", err.message, err.stack);
+    console.error("❌ Erro ao salvar o agendamento:", err.message);
     res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
   }
 });
