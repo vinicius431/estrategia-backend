@@ -5,13 +5,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fetch = require("node-fetch");
 require("dotenv").config();
+console.log("🧪 Verificando variáveis de ambiente:");
+console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("CLOUDINARY_KEY:", process.env.CLOUDINARY_KEY);
+console.log("CLOUDINARY_SECRET:", process.env.CLOUDINARY_SECRET);
 
 const { cloudinary, storage } = require("./config/cloudinary");
-const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-});
-
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
 const Usuario = require("./models/Usuario");
 
 const app = express();
@@ -84,61 +84,62 @@ const AgendamentoSchema = new mongoose.Schema({
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
 
-app.post("/agendamentos", autenticarToken, upload.single("imagem"), async (req, res) => {
-  try {
-    console.log("📥 Body recebido:", req.body);
-    console.log("📁 Arquivo recebido:", req.file);
-
-    const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
-
-    let mediaUrl = null;
-    if (req.file) {
-      try {
-        // Upload via stream (usando buffer do arquivo)
-       const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-  folder: "estrategia_uploads",
-  resource_type: "auto",
-});
-
-
-        mediaUrl = uploadResult.secure_url;
-        console.log("✅ URL pública do Cloudinary:", mediaUrl);
-      } catch (err) {
-        console.error("❌ Erro ao fazer upload no Cloudinary:");
-console.error(JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
-        return res.status(500).json({ erro: "Erro ao fazer upload no Cloudinary." });
+app.post(
+  "/agendamentos",
+  autenticarToken,
+  (req, res, next) => {
+    upload.single("imagem")(req, res, function (err) {
+      if (err) {
+        console.error("❌ Erro no multer:", err);
+        return res.status(400).json({ erro: err.message || "Erro no upload do arquivo." });
       }
-    } else {
-      console.warn("⚠️ Nenhuma mídia foi enviada ou falha no upload.");
-      return res.status(400).json({ erro: "Nenhuma mídia foi enviada." });
-    }
-
-    const novo = new Agendamento({
-      titulo,
-      descricao,
-      cta,
-      hashtags,
-      data,
-      hora,
-      imagem: mediaUrl,
-      status: status || "agendado",
-      criadoEm: new Date().toISOString(),
+      next(); // vai para o próximo handler
     });
+  },
+  async (req, res) => {
+    try {
+      console.log("📥 Body recebido:", req.body);
+      console.log("📁 Arquivo recebido:", req.file);
 
-    await novo.save();
-    res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
-  } catch (err) {
-    console.error("❌ Erro ao salvar o agendamento:", err?.message || JSON.stringify(err, null, 2));
-    res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
+      const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
+
+     let mediaUrl = null;
+if (req.file && req.file.path) {
+  mediaUrl = req.file.path;
+  console.log("✅ URL automática do Cloudinary:", mediaUrl);
+} else {
+  return res.status(400).json({ erro: "Nenhuma mídia foi enviada." });
+}
+
+
+      const novo = new Agendamento({
+        titulo,
+        descricao,
+        cta,
+        hashtags,
+        data,
+        hora,
+        imagem: mediaUrl,
+        status: status || "agendado",
+        criadoEm: new Date().toISOString(),
+      });
+
+      await novo.save();
+      res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
+    } catch (err) {
+      console.error("❌ Erro geral:", err);
+      res.status(500).json({ erro: err.message || "Erro ao salvar o agendamento." });
+    }
   }
-});
+);
+
 
 app.get("/agendamentos", autenticarToken, async (req, res) => {
   try {
     const lista = await Agendamento.find().sort({ criadoEm: -1 });
     res.json(lista);
   } catch (err) {
-    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
+    console.error("❌ Erro completo:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     res.status(500).json({ erro: "Erro ao buscar os agendamentos." });
   }
 });
@@ -152,7 +153,7 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
       res.status(404).json({ erro: "Agendamento não encontrado." });
     }
   } catch (err) {
-    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
+    console.error("❌ Erro completo:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     res.status(500).json({ erro: "Erro ao excluir o agendamento." });
   }
 });
@@ -178,7 +179,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
 
     res.json({ mensagem: "Agendamento atualizado com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro detalhado:", JSON.stringify(err, null, 2));
+    console.error("❌ Erro completo:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
   }
 });
