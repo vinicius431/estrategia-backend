@@ -161,26 +161,33 @@ app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
 app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (req, res) => {
   try {
     const { titulo, descricao, cta, hashtags, data, hora } = req.body;
-    const mediaUrl = req.file ? req.file.path : null;
+    const agendamento = await Agendamento.findById(req.params.id);
 
-    const atualizacao = {
-      titulo,
-      descricao,
-      cta,
-      hashtags,
-      data,
-      hora,
-    };
+    if (!agendamento) {
+      return res.status(404).json({ erro: "Agendamento não encontrado." });
+    }
 
-    if (mediaUrl) atualizacao.imagem = mediaUrl;
+    // Atualiza os campos textuais
+    agendamento.titulo = titulo;
+    agendamento.descricao = descricao;
+    agendamento.cta = cta;
+    agendamento.hashtags = hashtags;
+    agendamento.data = data;
+    agendamento.hora = hora;
 
-    const atualizado = await Agendamento.findByIdAndUpdate(req.params.id, atualizacao, { new: true });
-    if (!atualizado) return res.status(404).json({ erro: "Agendamento não encontrado." });
+    // Se tiver nova mídia, faz upload pro Cloudinary
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "auto", // aceita imagem e vídeo
+      });
+      agendamento.imagem = result.secure_url;
+    }
 
+    await agendamento.save();
     res.json({ mensagem: "Agendamento atualizado com sucesso!" });
   } catch (err) {
-    console.error("❌ Erro completo:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
-    res.status(500).json({ erro: "Erro ao atualizar o agendamento." });
+    console.error("❌ Erro ao atualizar agendamento:", err);
+    res.status(500).json({ erro: "Erro interno ao atualizar o agendamento." });
   }
 });
 
