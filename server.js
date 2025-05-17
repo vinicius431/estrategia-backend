@@ -83,6 +83,17 @@ const AgendamentoSchema = new mongoose.Schema({
 });
 const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
 
+// TutorHistorico Model
+const TutorSchema = new mongoose.Schema({
+  usuarioId: String,
+  tema: String,
+  headline: String,
+  descricao: String,
+  cta: String,
+  hashtags: [String],
+  criadoEm: String,
+});
+const TutorHistorico = mongoose.model("TutorHistorico", TutorSchema);
 
 app.post(
   "/agendamentos",
@@ -314,6 +325,8 @@ app.post("/gerar-headline", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
 
+    console.log("📩 Tema recebido em /gerar-headline:", tema);
+
   try {
     const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -354,6 +367,8 @@ app.post("/gerar-headline", async (req, res) => {
 app.post("/gerar-descricao", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+
+    console.log("📩 Tema recebido em /gerar-descricao:", tema);
 
   try {
     const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -480,6 +495,40 @@ app.post("/gerar-tutor", async (req, res) => {
     res.json({ headline, descricao, cta, hashtags });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao gerar conteúdo do tutor com IA." });
+  }
+});
+
+// ✅ Rota para salvar histórico do Tutor
+app.post("/salvar-tutor", autenticarToken, async (req, res) => {
+  try {
+    const { tema, headline, descricao, cta, hashtags } = req.body;
+
+    const novoRegistro = new TutorHistorico({
+      usuarioId: req.usuarioId,
+      tema,
+      headline,
+      descricao,
+      cta,
+      hashtags,
+      criadoEm: new Date().toISOString(),
+    });
+
+    await novoRegistro.save();
+    res.status(201).json({ mensagem: "Histórico salvo com sucesso!" });
+  } catch (err) {
+    console.error("❌ Erro ao salvar histórico do tutor:", err);
+    res.status(500).json({ erro: "Erro interno ao salvar histórico do tutor." });
+  }
+});
+
+// ✅ Rota para buscar histórico do Tutor por usuário
+app.get("/tutor-historico", autenticarToken, async (req, res) => {
+  try {
+    const historico = await TutorHistorico.find({ usuarioId: req.usuarioId }).sort({ criadoEm: -1 });
+    res.json(historico);
+  } catch (err) {
+    console.error("❌ Erro ao buscar histórico do tutor:", err);
+    res.status(500).json({ erro: "Erro interno ao buscar histórico do tutor." });
   }
 });
 
