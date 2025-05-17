@@ -291,7 +291,7 @@ app.post("/gerar-conteudo", async (req, res) => {
         temperature: 0.7,
       }),
     });
-
+    
     const data = await resposta.json();
     const respostaIA = data.choices?.[0]?.message?.content || "";
 
@@ -308,6 +308,89 @@ app.post("/gerar-conteudo", async (req, res) => {
     res.status(500).json({ erro: err.message || "Erro ao gerar conteúdo com IA." });
   }
 });
+
+// IA: Gerar apenas HEADLINE (título criativo)
+app.post("/gerar-headline", async (req, res) => {
+  const { tema } = req.body;
+  if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+
+  try {
+    const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um estrategista criativo de redes sociais. Gere apenas 1 título impactante e chamativo para uma publicação com base no tema fornecido. Responda somente com o título, sem explicações ou numeração.",
+          },
+          {
+            role: "user",
+            content: `Tema: ${tema}`,
+          },
+        ],
+        temperature: 0.75,
+      }),
+    });
+
+    const data = await resposta.json();
+    const titulo = data.choices?.[0]?.message?.content?.trim();
+
+    if (!titulo) return res.status(400).json({ erro: "A IA não gerou nenhum título." });
+
+    res.json({ titulo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao gerar título com IA." });
+  }
+});
+
+// IA: Gerar apenas DESCRIÇÃO (texto criativo)
+app.post("/gerar-descricao", async (req, res) => {
+  const { tema } = req.body;
+  if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+
+  try {
+    const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um redator especialista em redes sociais. Gere um parágrafo curto, envolvente e persuasivo com base no tema fornecido. Esse parágrafo será usado como legenda no Instagram. Responda apenas com o parágrafo.",
+          },
+          {
+            role: "user",
+            content: `Tema: ${tema}`,
+          },
+        ],
+        temperature: 0.75,
+      }),
+    });
+
+    const data = await resposta.json();
+    const descricao = data.choices?.[0]?.message?.content?.trim();
+
+    if (!descricao) return res.status(400).json({ erro: "A IA não gerou nenhuma descrição." });
+
+    res.json({ descricao });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Erro ao gerar descrição com IA." });
+  }
+});
+
 
 // IA: Hashtags
 app.post("/gerar-hashtags", async (req, res) => {
