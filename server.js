@@ -209,13 +209,23 @@ app.use(express.json());
 
 // Auth
 app.post("/auth/register", async (req, res) => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, telefone, nascimento, sexo } = req.body;
+
   try {
     const existe = await Usuario.findOne({ email });
     if (existe) return res.status(400).json({ erro: "Email já cadastrado." });
 
     const hash = await bcrypt.hash(senha, 10);
-    const novoUsuario = new Usuario({ nome, email, senha: hash });
+
+    const novoUsuario = new Usuario({
+      nome,
+      email,
+      senha: hash,
+      telefone,
+      nascimento,
+      sexo,
+    });
+
     await novoUsuario.save();
 
     res.status(201).json({ mensagem: "Usuário criado com sucesso!" });
@@ -224,6 +234,7 @@ app.post("/auth/register", async (req, res) => {
     res.status(500).json({ erro: "Erro ao registrar usuário." });
   }
 });
+
 
 app.post("/auth/login", async (req, res) => {
   const { email, senha } = req.body;
