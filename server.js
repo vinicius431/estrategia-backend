@@ -490,8 +490,31 @@ app.post("/gerar-tutor", async (req, res) => {
         messages: [
           {
             role: "system",
-            content:
-              "Você é um tutor de marketing digital que ajuda criadores de conteúdo a criar posts virais. Gere exatamente:\n\n1 headline impactante,\n1 descrição curta e persuasiva,\n1 chamada para ação (CTA),\ne 5 hashtags populares e relacionadas.\n\nResponda com esse formato:\n\nHeadline: ...\nDescrição: ...\nCTA: ...\nHashtags:\n#tag1 #tag2 #tag3 #tag4 #tag5",
+            content: `
+Você é um tutor de marketing digital que ajuda criadores de conteúdo a planejar postagens para o Instagram.
+
+Responda com exatamente este formato (sem explicações):
+
+Headlines:
+1. ...
+2. ...
+3. ...
+4. ...
+5. ...
+
+Descrições:
+1. ...
+2. ...
+3. ...
+
+CTAs:
+1. ...
+2. ...
+3. ...
+
+Hashtags:
+#tag1 #tag2 #tag3 #tag4 #tag5
+            `.trim(),
           },
           {
             role: "user",
@@ -505,21 +528,38 @@ app.post("/gerar-tutor", async (req, res) => {
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
 
-    const headline = texto.match(/Headline:\s*(.+)/i)?.[1]?.trim() || "";
-    const descricao = texto.match(/Descrição:\s*(.+)/i)?.[1]?.trim() || "";
-    const cta = texto.match(/CTA:\s*(.+)/i)?.[1]?.trim() || "";
-    const hashtagsMatch = texto.match(/Hashtags:\s*(.+)/i)?.[1] || "";
+    const headlines = (texto.match(/Headlines:\s*([\s\S]+?)Descrições:/i)?.[1] || "")
+      .split("\n")
+      .map((l) => l.replace(/^\d+\.\s*/, "").trim())
+      .filter((l) => l);
 
-    const hashtags = hashtagsMatch
+    const descricoes = (texto.match(/Descrições:\s*([\s\S]+?)CTAs:/i)?.[1] || "")
+      .split("\n")
+      .map((l) => l.replace(/^\d+\.\s*/, "").trim())
+      .filter((l) => l);
+
+    const ctas = (texto.match(/CTAs:\s*([\s\S]+?)Hashtags:/i)?.[1] || "")
+      .split("\n")
+      .map((l) => l.replace(/^\d+\.\s*/, "").trim())
+      .filter((l) => l);
+
+    const hashtagsStr = texto.match(/Hashtags:\s*(.+)/i)?.[1] || "";
+    const hashtags = hashtagsStr
       .split(/[\s,]+/)
-      .filter((tag) => tag.startsWith("#"))
+      .filter((t) => t.startsWith("#"))
       .slice(0, 5);
 
-    res.json({ headline, descricao, cta, hashtags });
+    if (!headlines.length || !descricoes.length || !ctas.length || !hashtags.length) {
+      return res.status(400).json({ erro: "A IA não retornou conteúdo utilizável." });
+    }
+
+    res.json({ headlines, descricoes, ctas, hashtags });
   } catch (err) {
+    console.error("❌ Erro em /gerar-tutor:", err);
     res.status(500).json({ erro: "Erro ao gerar conteúdo do tutor com IA." });
   }
 });
+
 
 // ✅ Rota para salvar histórico do Tutor
 app.post("/salvar-tutor", autenticarToken, async (req, res) => {
