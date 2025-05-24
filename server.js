@@ -338,7 +338,7 @@ app.post("/gerar-headline", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
 
-    console.log("📩 Tema recebido em /gerar-headline:", tema);
+  console.log("📩 Tema recebido em /gerar-headline:", tema);
 
   try {
     const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -352,8 +352,7 @@ app.post("/gerar-headline", async (req, res) => {
         messages: [
           {
             role: "system",
-            content:
-              "Você é um estrategista criativo de redes sociais. Gere apenas 1 título impactante e chamativo para uma publicação com base no tema fornecido. Responda somente com o título, sem explicações ou numeração.",
+            content: "Você é um estrategista criativo de redes sociais. Gere exatamente 5 headlines criativas e impactantes para posts no Instagram com base no tema. Responda apenas com as frases separadas por quebra de linha, sem numeração.",
           },
           {
             role: "user",
@@ -365,23 +364,29 @@ app.post("/gerar-headline", async (req, res) => {
     });
 
     const data = await resposta.json();
-    const titulo = data.choices?.[0]?.message?.content?.trim();
+    const texto = data.choices?.[0]?.message?.content || "";
 
-    if (!titulo) return res.status(400).json({ erro: "A IA não gerou nenhum título." });
+    const titulos = texto
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
 
-    res.json({ titulo });
+    if (!titulos.length) return res.status(400).json({ erro: "A IA não retornou nenhum título válido." });
+
+    res.json({ titulos });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ erro: "Erro ao gerar título com IA." });
+    res.status(500).json({ erro: "Erro ao gerar títulos com IA." });
   }
 });
+
 
 // IA: Gerar apenas DESCRIÇÃO (texto criativo)
 app.post("/gerar-descricao", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
 
-    console.log("📩 Tema recebido em /gerar-descricao:", tema);
+  console.log("📩 Tema recebido em /gerar-descricao:", tema);
 
   try {
     const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -396,7 +401,7 @@ app.post("/gerar-descricao", async (req, res) => {
           {
             role: "system",
             content:
-              "Você é um redator especialista em redes sociais. Gere um parágrafo curto, envolvente e persuasivo com base no tema fornecido. Esse parágrafo será usado como legenda no Instagram. Responda apenas com o parágrafo.",
+              "Você é um redator criativo para redes sociais. Gere 3 variações de descrições curtas e envolventes para uma publicação no Instagram com base no tema fornecido. Responda apenas com os parágrafos separados por quebra de linha, sem numeração.",
           },
           {
             role: "user",
@@ -408,14 +413,19 @@ app.post("/gerar-descricao", async (req, res) => {
     });
 
     const data = await resposta.json();
-    const descricao = data.choices?.[0]?.message?.content?.trim();
+    const texto = data.choices?.[0]?.message?.content || "";
 
-    if (!descricao) return res.status(400).json({ erro: "A IA não gerou nenhuma descrição." });
+    const descricoes = texto
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
 
-    res.json({ descricao });
+    if (!descricoes.length) return res.status(400).json({ erro: "A IA não retornou nenhuma descrição válida." });
+
+    res.json({ descricoes });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ erro: "Erro ao gerar descrição com IA." });
+    res.status(500).json({ erro: "Erro ao gerar descrições com IA." });
   }
 });
 
