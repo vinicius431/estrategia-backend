@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const bcrypt = require("bcryptjs");
@@ -20,35 +21,34 @@ const app = express(); // ✅ primeiro define o app
 
 app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
 
-const rotaInstagram = require("./routes/integracao");
-app.use(rotaInstagram);
+const integracaoRoutes = require("./routes/integracao");
+app.use("/api", integracaoRoutes);
 
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
 // ✅ CORS
-app.use((req, res, next) => {
+
   const allowedOrigins = [
-    "http://localhost:5173",
-    "https://estrategia-frontend.vercel.app",
-    "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
-    "https://estrategia-frontend-oohkt1r4z-vincius-nogueiras-projects.vercel.app",
-    "https://estrategia-frontend-epdnsb6l1-vincius-nogueiras-projects.vercel.app",
-    "https://appestrategia.com",
-    "https://www.appestrategia.com"
-  ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
+  "http://localhost:5173",
+  "https://estrategia-frontend.vercel.app",
+  "https://estrategia-frontend-a7m5lr9fc-vincius-nogueiras-projects.vercel.app",
+  "https://estrategia-frontend-oohkt1r4z-vincius-nogueiras-projects.vercel.app",
+  "https://estrategia-frontend-epdnsb6l1-vincius-nogueiras-projects.vercel.app",
+  "https://appestrategia.com",
+  "https://www.appestrategia.com"
+];
 
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
