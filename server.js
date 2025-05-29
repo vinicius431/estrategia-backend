@@ -15,22 +15,8 @@ const { cloudinary, storage } = require("./config/cloudinary");
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
 const Usuario = require("./models/Usuario");
 
-const instagramRoutes = require("./routes/instagramService"); // ✅ ROTAS INSTAGRAM
 
 const app = express(); // ✅ primeiro define o app
-
-app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
-
-const integracaoRoutes = require("./routes/integracao");
-app.use("/api", integracaoRoutes);
-
-const publicarNoInstagram = require("./routes/publicarNoInstagram");
-app.use("/", publicarNoInstagram);
-
-const uploadRoute = require("./routes/upload");
-app.use("/", uploadRoute);
-
-
 
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
@@ -60,6 +46,19 @@ app.use(cors({
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
+
+const integracaoRoutes = require("./routes/integracao");
+app.use("/api", integracaoRoutes);
+
+const publicarNoInstagram = require("./routes/publicarNoInstagram");
+app.use("/", publicarNoInstagram);
+
+const uploadRoute = require("./routes/upload");
+app.use("/", uploadRoute);
+
+const instagramRoutes = require("./routes/instagramService"); // ✅ ROTAS INSTAGRAM
 
 // Teste
 app.get("/", (req, res) => {
