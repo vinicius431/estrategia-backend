@@ -14,7 +14,7 @@ const { cloudinary, storage } = require("./config/cloudinary");
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
 const Usuario = require("./models/Usuario");
 
-const instagramRoutes = require("./routes/instagramRoutes"); // ✅ ROTAS INSTAGRAM
+const instagramRoutes = require("./routes/instagramService"); // ✅ ROTAS INSTAGRAM
 
 const app = express(); // ✅ primeiro define o app
 
