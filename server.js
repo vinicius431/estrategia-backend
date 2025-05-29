@@ -20,6 +20,8 @@ const app = express(); // ✅ primeiro define o app
 
 app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
 
+const rotaInstagram = require("./routes/integracao");
+app.use(rotaInstagram);
 
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
@@ -606,6 +608,36 @@ app.get("/auth/facebook", (req, res) => {
   const redirectUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish&response_type=code`;
 
   res.redirect(redirectUrl);
+});
+
+app.post("/integracao/instagram", autenticarToken, async (req, res) => {
+  const { instagramAccessToken, instagramBusinessId, facebookPageId } = req.body;
+
+  if (!instagramAccessToken || !instagramBusinessId || !facebookPageId) {
+    return res.status(400).json({ erro: "Dados incompletos." });
+  }
+
+  try {
+    const usuario = await Usuario.findByIdAndUpdate(
+      req.usuarioId,
+      {
+        instagramAccessToken,
+        instagramBusinessId,
+        facebookPageId,
+        tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
+      },
+      { new: true }
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ erro: "Usuário não encontrado." });
+    }
+
+    res.status(200).json({ mensagem: "Instagram conectado com sucesso." });
+  } catch (err) {
+    console.error("Erro ao salvar dados do Instagram:", err);
+    res.status(500).json({ erro: "Erro ao salvar dados do Instagram." });
+  }
 });
 
 // Start server
