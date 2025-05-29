@@ -27,6 +27,10 @@ app.use("/api", integracaoRoutes);
 const publicarNoInstagram = require("./routes/publicarNoInstagram");
 app.use("/", publicarNoInstagram);
 
+const uploadRoute = require("./routes/upload");
+app.use("/", uploadRoute);
+
+
 
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
