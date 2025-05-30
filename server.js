@@ -47,6 +47,7 @@ app.use(cors({
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+const instagramRoutes = require("./routes/instagramService"); // ✅ ROTAS INSTAGRAM
 app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
 
 const integracaoRoutes = require("./routes/integracao");
@@ -57,8 +58,6 @@ app.use("/", publicarNoInstagram);
 
 const uploadRoute = require("./routes/upload");
 app.use("/", uploadRoute);
-
-const instagramRoutes = require("./routes/instagramService"); // ✅ ROTAS INSTAGRAM
 
 // Teste
 app.get("/", (req, res) => {
