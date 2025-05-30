@@ -646,6 +646,25 @@ app.post("/integracao/instagram", autenticarToken, async (req, res) => {
   }
 });
 
+// ✅ Rota GET para verificar se o Instagram está conectado
+app.get("/integracao/instagram", autenticarToken, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.usuarioId);
+
+    if (!usuario) {
+      return res.status(404).json({ erro: "Usuário não encontrado." });
+    }
+
+    const { instagramAccessToken, instagramBusinessId } = usuario;
+
+    res.json({ instagramAccessToken, instagramBusinessId });
+  } catch (err) {
+    console.error("❌ Erro ao verificar integração do Instagram:", err);
+    res.status(500).json({ erro: "Erro ao verificar integração." });
+  }
+});
+
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Backend rodando na porta ${PORT}`);
