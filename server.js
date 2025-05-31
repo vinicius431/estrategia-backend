@@ -55,9 +55,6 @@ app.use("/api", integracaoRoutes);
 const publicarInstagram = require("./routes/instagramPublicar");
 app.use("/api", publicarInstagram);
 
-const outrasRotasInstagram = require("./routes/instagram");
-app.use("/api", outrasRotasInstagram);
-
 
 
 const uploadRoute = require("./routes/upload");
