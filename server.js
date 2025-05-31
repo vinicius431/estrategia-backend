@@ -53,8 +53,7 @@ app.use("/api", instagramRoutes); // ✅ depois usa o app normalmente
 const integracaoRoutes = require("./routes/integracao");
 app.use("/api", integracaoRoutes);
 
-const publicarNoInstagram = require("./routes/publicarNoInstagram");
-app.use("/", publicarNoInstagram);
+
 
 const uploadRoute = require("./routes/upload");
 app.use("/", uploadRoute);
