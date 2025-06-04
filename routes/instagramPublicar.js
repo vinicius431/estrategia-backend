@@ -6,7 +6,7 @@ const Usuario = require("../models/Usuario");
 const router = express.Router();
 
 // 📤 POST para publicar no Instagram
-router.post("/instagram/publicar", async (req, res) => {
+router.post("/instagram/publicar", express.json(), async (req, res) => {
   try {
     console.log("📦 Body recebido:", req.body); // Debug: legenda, midiaUrl, tipo
 
