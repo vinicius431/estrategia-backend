@@ -2,11 +2,15 @@ const express = require("express");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const Usuario = require("../models/Usuario");
+const bodyParser = require("body-parser");
 
 const router = express.Router();
 
+// 🔧 Middleware para garantir leitura do body em JSON
+router.use(bodyParser.json());
+
 // 📤 POST para publicar no Instagram
-router.post("/instagram/publicar", express.json(), async (req, res) => {
+router.post("/instagram/publicar", async (req, res) => {
   try {
     console.log("📦 Body recebido:", req.body); // Debug: legenda, midiaUrl, tipo
 
@@ -32,6 +36,7 @@ router.post("/instagram/publicar", express.json(), async (req, res) => {
     const { legenda, midiaUrl, tipo } = req.body;
 
     if (!legenda || !midiaUrl) {
+      console.log("🚫 Falta legenda ou midiaUrl.");
       return res.status(400).json({ erro: "Legenda e mídia são obrigatórios." });
     }
 
