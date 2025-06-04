@@ -62,9 +62,19 @@ router.post("/instagram/publicar", async (req, res) => {
     return res.status(200).json({ sucesso: true, postId: publishRes.data.id });
 
   } catch (erro) {
-    console.error("🚨 Erro ao publicar no Instagram:", erro.response?.data || erro.message);
-    return res.status(500).json({ erro: "Erro ao publicar no Instagram." });
+  if (erro.response) {
+    console.error("📛 Erro da Graph API:");
+    console.error("📎 Status:", erro.response.status);
+    console.error("📩 Data:", erro.response.data);
+    console.error("🧾 Headers:", erro.response.headers);
+  } else if (erro.request) {
+    console.error("📡 Sem resposta da API:", erro.request);
+  } else {
+    console.error("❌ Erro ao configurar a requisição:", erro.message);
   }
+
+  return res.status(500).json({ erro: "Erro ao publicar no Instagram." });
+}
 });
 
 module.exports = router;
