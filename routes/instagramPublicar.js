@@ -11,6 +11,8 @@ router.use(bodyParser.json());
 
 // 📤 POST para publicar no Instagram
 router.post("/instagram/publicar", async (req, res) => {
+  console.log("🚀 A rota /instagram/publicar foi acionada");
+
   try {
     console.log("📦 Body recebido:", req.body); // Debug: legenda, midiaUrl, tipo
 
