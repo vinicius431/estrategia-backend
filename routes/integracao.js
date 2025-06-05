@@ -77,7 +77,7 @@ router.post("/instagram/publicar", autenticar, async (req, res) => {
     // Criação do container
     const containerUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media`;
     const containerRes = await axios.post(containerUrl, {
-      image_url: imagemUrl,
+      image_url: midiaUrl,
       caption: legenda,
       access_token: usuario.instagramAccessToken,
     });
