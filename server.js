@@ -88,7 +88,6 @@ function autenticarToken(req, res, next) {
 
   console.log("🧪 Token recebido:", token);
 
-
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(403).json({ erro: "Token inválido" });
     req.usuarioId = decoded.id;
