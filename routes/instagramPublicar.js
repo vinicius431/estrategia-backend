@@ -13,6 +13,10 @@ router.use(bodyParser.json());
 router.post("/instagram/publicar", async (req, res) => {
   console.log("🚀 A rota /instagram/publicar foi acionada");
 
+   console.log("📍 Headers recebidos:", req.headers);
+  console.log("📩 Chegou na rota com body:", req.body);
+
+
   try {
     console.log("📦 Body recebido:", req.body); // Exibe o body
 
