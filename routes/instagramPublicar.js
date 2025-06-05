@@ -2,24 +2,36 @@ const express = require("express");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const Usuario = require("../models/Usuario");
-const bodyParser = require("body-parser");
 
 const router = express.Router();
 
-// 🔧 Middleware para leitura do body em JSON
-router.use(bodyParser.json());
+// Middleware para capturar o body cru e tentar decodificar manualmente (para DEBUG)
+router.use((req, res, next) => {
+  let data = "";
+  req.on("data", chunk => {
+    data += chunk;
+  });
+
+  req.on("end", () => {
+    console.log("🧾 RAW BODY recebido:", data);
+    try {
+      req.body = JSON.parse(data);
+    } catch (e) {
+      console.error("❌ JSON malformado:", e.message);
+      return res.status(400).json({ erro: "JSON inválido." });
+    }
+    next();
+  });
+});
 
 // 📤 POST para publicar no Instagram
 router.post("/instagram/publicar", async (req, res) => {
   console.log("🚀 A rota /instagram/publicar foi acionada");
 
-   console.log("📍 Headers recebidos:", req.headers);
+  console.log("📍 Headers recebidos:", req.headers);
   console.log("📩 Chegou na rota com body:", req.body);
 
-
   try {
-    console.log("📦 Body recebido:", req.body); // Exibe o body
-
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       console.log("❌ Token não fornecido.");
@@ -50,7 +62,7 @@ router.post("/instagram/publicar", async (req, res) => {
       return res.status(400).json({ erro: "Legenda, mídia e tipo são obrigatórios." });
     }
 
-    // 🛠️ Etapa 1: Criar o container
+    // Etapa 1: Criar o container
     const containerUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media`;
     const containerPayload = {
       caption: legenda,
@@ -62,7 +74,7 @@ router.post("/instagram/publicar", async (req, res) => {
     const creationId = containerRes.data.id;
     console.log("✅ Container criado com ID:", creationId);
 
-    // 🚀 Etapa 2: Publicar o container
+    // Etapa 2: Publicar o container
     const publishUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media_publish`;
     const publishRes = await axios.post(publishUrl, {
       creation_id: creationId,
