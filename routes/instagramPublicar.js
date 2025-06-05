@@ -39,6 +39,7 @@ router.post("/instagram/publicar", async (req, res) => {
     }
 
     const { legenda, midiaUrl, tipo } = req.body;
+    console.log("📥 Dados recebidos no backend:", { legenda, midiaUrl, tipo });
 
     if (!legenda || !midiaUrl || !tipo) {
       console.log("🚫 Falta legenda, midiaUrl ou tipo.");
