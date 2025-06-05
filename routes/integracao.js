@@ -62,9 +62,9 @@ router.get("/integracao/instagram", autenticar, async (req, res) => {
 // 📤 POST para publicar no Instagram
 router.post("/instagram/publicar", autenticar, async (req, res) => {
   try {
-    const { legenda, imagemUrl } = req.body;
+    const { legenda, midiaUrl } = req.body;
 
-    if (!legenda || !imagemUrl) {
+    if (!legenda || !midiaUrl) {
       return res.status(400).json({ erro: "Legenda e imagem são obrigatórios." });
     }
 
