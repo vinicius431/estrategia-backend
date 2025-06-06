@@ -5,7 +5,14 @@ const UsuarioSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
   plano: { type: String, default: "Free" },
-  criadoEm: { type: Date, default: Date.now }
+  criadoEm: { type: Date, default: Date.now },
+
+  // Campos da integração com o Instagram
+  instagramAccessToken: String,
+  instagramBusinessId: String,
+  facebookPageId: String,
+  instagramName: String,
+  tokenExpiresAt: Date,
 });
 
 module.exports = mongoose.model("Usuario", UsuarioSchema);
