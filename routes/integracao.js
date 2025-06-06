@@ -23,6 +23,10 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
   try {
     const { instagramAccessToken, instagramBusinessId, facebookPageId, instagramName } = req.body;
 
+    console.log("📦 Dados recebidos para salvar:", req.body);
+    console.log("👤 Usuário ID:", req.usuarioId);
+ 
+
     await Usuario.findByIdAndUpdate(req.usuarioId, {
       instagramAccessToken,
       instagramBusinessId,
