@@ -27,13 +27,18 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
     console.log("👤 Usuário ID:", req.usuarioId);
  
 
-    await Usuario.findByIdAndUpdate(req.usuarioId, {
-      instagramAccessToken,
-      instagramBusinessId,
-      facebookPageId,
-      instagramName,
-      tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
-    });
+  await Usuario.findByIdAndUpdate(
+  req.usuarioId,
+  {
+    instagramAccessToken,
+    instagramBusinessId,
+    facebookPageId,
+    instagramName,
+    tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+  },
+  { new: true, useFindAndModify: false } // ✅ CORRETO aqui
+);
+
 
     return res.status(200).json({ mensagem: "Dados salvos com sucesso." });
   } catch (err) {
