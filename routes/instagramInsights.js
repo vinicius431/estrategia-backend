@@ -21,31 +21,31 @@ function autenticarToken(req, res, next) {
   });
 }
 
-// Rota para buscar insights
+// Rota para buscar insights da Página do Facebook
 router.get("/insights", autenticarToken, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
-    const token = usuario.paginaAccessToken; // ✅ Token correto
-    const businessId = usuario.instagramBusinessId;
+    const token = usuario.paginaAccessToken; // 🔑 token correto
+    const pageId = usuario.facebookPageId;   // 📘 ID da página do Facebook
 
-    if (!token || !businessId) {
-      return res.status(400).json({ erro: "Instagram ou Página não conectados." });
+    if (!token || !pageId) {
+      return res.status(400).json({ erro: "Página do Facebook não conectada." });
     }
 
-    const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
-    console.log("📡 Requisição para insights:", url);
+    const url = `https://graph.facebook.com/v19.0/${pageId}/insights?metric=page_impressions,page_engaged_users&period=day&access_token=${token}`;
+    console.log("📡 Requisição para insights da página:", url);
 
     const resposta = await fetch(url);
     const text = await resposta.text();
-    let dados;
 
+    let dados;
     try {
       dados = JSON.parse(text);
     } catch (jsonErr) {
       console.error("❌ JSON malformado:", text);
-      return res.status(500).json({ erro: "Resposta inválida da API do Instagram", detalhes: text });
+      return res.status(500).json({ erro: "Resposta inválida da API do Facebook", detalhes: text });
     }
 
     if (!resposta.ok) {
