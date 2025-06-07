@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_super_ultra_forte";
 
+// Middleware para autenticação
 function autenticarToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).json({ erro: "Token não fornecido" });
@@ -20,27 +21,28 @@ function autenticarToken(req, res, next) {
   });
 }
 
+// Rota para buscar insights
 router.get("/insights", autenticarToken, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
-    const token = usuario.instagramAccessToken;
+    const token = usuario.paginaAccessToken; // ✅ Token correto
     const businessId = usuario.instagramBusinessId;
 
     if (!token || !businessId) {
-      return res.status(400).json({ erro: "Instagram não conectado." });
+      return res.status(400).json({ erro: "Instagram ou Página não conectados." });
     }
 
     const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
     console.log("📡 Requisição para insights:", url);
 
     const resposta = await fetch(url);
-    const text = await resposta.text(); // 👈 primeiro lê como texto
+    const text = await resposta.text();
     let dados;
 
     try {
-      dados = JSON.parse(text); // 👈 depois tenta parsear como JSON
+      dados = JSON.parse(text);
     } catch (jsonErr) {
       console.error("❌ JSON malformado:", text);
       return res.status(500).json({ erro: "Resposta inválida da API do Instagram", detalhes: text });
