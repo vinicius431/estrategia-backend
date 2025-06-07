@@ -59,6 +59,7 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
 });
 
 
+
 // 🔍 GET para verificar se o usuário já está integrado
 router.get("/integracao/instagram", autenticar, async (req, res) => {
   try {
