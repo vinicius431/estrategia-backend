@@ -25,11 +25,15 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
-    const token = usuario.instagramAccessToken;
-    const businessId = usuario.instagramBusinessId;
+   const token = usuario.instagramAccessToken;
+   const businessId = usuario.instagramBusinessId;
 
-    const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
+if (!token || !businessId) {
+  return res.status(400).json({ erro: "Instagram não conectado." });
+}
 
+const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
+ 
     const resposta = await fetch(url);
     const dados = await resposta.json();
 
