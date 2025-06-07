@@ -35,6 +35,9 @@ if (!token || !businessId) {
 const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
  
 console.log("📡 Requisição para insights:", url);
+console.log("✅ Token:", token);
+console.log("✅ Business ID:", businessId);
+console.log("✅ URL completa:", url);
 
     const resposta = await fetch(url);
     const dados = await resposta.json();
