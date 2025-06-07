@@ -28,7 +28,7 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
  
 
  // 🔍 Buscar token da página (obrigatório para insights)
-const paginasRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${instagramAccessToken}`);
+const redirectUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,instagram_manage_insights`;
 const paginas = paginasRes.data.data;
 
 const pagina = paginas.find(p => p.id === facebookPageId);
@@ -74,6 +74,7 @@ router.get("/integracao/instagram", autenticar, async (req, res) => {
       conectado: true,
       instagramBusinessId: usuario.instagramBusinessId,
       instagramAccessToken: usuario.instagramAccessToken,
+      paginaAccessToken: usuario.paginaAccessToken,
       instagramName: usuario.instagramName || "Perfil conectado ✅",
     });
   } catch (err) {
