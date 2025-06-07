@@ -623,7 +623,7 @@ app.get("/tutor-historico", autenticarToken, async (req, res) => {
 
 // ✅ Rota para redirecionar o usuário para o login do Facebook
 app.get("/auth/facebook", (req, res) => {
-  const redirectUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish&response_type=code`;
+  const redirectUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&scope=pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,instagram_manage_insights`;
 
   res.redirect(redirectUrl);
 });
