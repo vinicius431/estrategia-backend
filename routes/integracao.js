@@ -27,17 +27,31 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
     console.log("👤 Usuário ID:", req.usuarioId);
  
 
-  await Usuario.findByIdAndUpdate(
+ // 🔍 Buscar token da página (obrigatório para insights)
+const paginasRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${instagramAccessToken}`);
+const paginas = paginasRes.data.data;
+
+const pagina = paginas.find(p => p.id === facebookPageId);
+if (!pagina || !pagina.access_token) {
+  return res.status(400).json({ erro: "Não foi possível obter o token da página." });
+}
+
+const paginaAccessToken = pagina.access_token;
+
+// 💾 Salvar tudo
+await Usuario.findByIdAndUpdate(
   req.usuarioId,
   {
     instagramAccessToken,
     instagramBusinessId,
     facebookPageId,
     instagramName,
+    paginaAccessToken, // 👈 token da página
     tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
   },
-  { new: true, useFindAndModify: false } // ✅ CORRETO aqui
+  { new: true, useFindAndModify: false }
 );
+
 
 
     return res.status(200).json({ mensagem: "Dados salvos com sucesso." });
