@@ -33,10 +33,9 @@ router.get("/insights", autenticarToken, async (req, res) => {
     }
 
     const url = `https://graph.facebook.com/v19.0/${businessId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
-
     console.log("📡 Requisição para insights:", url);
-    const resposta = await fetch(url);
 
+    const resposta = await fetch(url);
     const text = await resposta.text(); // 👈 primeiro lê como texto
     let dados;
 
@@ -48,7 +47,7 @@ router.get("/insights", autenticarToken, async (req, res) => {
     }
 
     if (!resposta.ok) {
-      return res.status(500).json({ erro: "Erro ao buscar insights", detalhes: dados });
+      return res.status(resposta.status).json({ erro: "Erro ao buscar insights", detalhes: dados });
     }
 
     res.json(dados);
