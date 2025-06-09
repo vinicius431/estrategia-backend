@@ -31,7 +31,6 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const token = usuario.paginaAccessToken;
     const instagramId = usuario.instagramBusinessId;
 
-    // 🟨 LOG: Dados do usuário antes da requisição
     console.log("🔐 JWT do usuário:", req.usuarioId);
     console.log("➡️ Token de acesso (paginaAccessToken):", token);
     console.log("➡️ Instagram Business ID:", instagramId);
@@ -47,23 +46,29 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const resposta = await fetch(url);
     const text = await resposta.text();
 
-    // 🟨 LOG: Resposta bruta da API da Meta
     console.log("📩 Resposta bruta da Meta:", text);
 
-    if (!resposta.ok) {
-      console.error("❌ Erro da API do Instagram:", text);
-      return res.status(resposta.status).json({
-        erro: "Erro ao buscar insights do Instagram",
-        detalhes: text,
-      });
+    // Se a resposta for vazia
+    if (!text || !text.trim()) {
+      console.error("❌ Resposta vazia da Meta.");
+      return res.status(500).json({ erro: "A Meta retornou uma resposta vazia." });
     }
 
     let dados;
     try {
       dados = JSON.parse(text);
     } catch (jsonErr) {
-      console.error("❌ JSON inválido:", text);
+      console.error("❌ JSON malformado:", text);
       return res.status(500).json({ erro: "Resposta malformada da Meta", detalhes: text });
+    }
+
+    // Se a resposta tiver erro mesmo sendo JSON válido
+    if (!resposta.ok) {
+      console.error("❌ Erro da API do Instagram:", dados);
+      return res.status(resposta.status).json({
+        erro: "Erro ao buscar insights do Instagram",
+        detalhes: dados,
+      });
     }
 
     console.log("✅ Dados de insights processados com sucesso.");
