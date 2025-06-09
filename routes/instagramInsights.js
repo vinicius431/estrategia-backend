@@ -23,6 +23,7 @@ function autenticarToken(req, res, next) {
 
 // 📊 Rota para buscar insights reais do Instagram Business
 router.get("/insights", autenticarToken, async (req, res) => {
+  console.log("🚀 Rota /insights foi acionada!");
   try {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
