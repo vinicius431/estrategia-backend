@@ -63,7 +63,7 @@ const publicarInstagram = require("./routes/instagramPublicar");
 app.use("/api", publicarInstagram);
 
 const instagramInsightsRoutes = require("./routes/instagramInsights");
-app.use("/instagram", instagramInsightsRoutes);
+app.use("/api/instagram", instagramInsightsRoutes);
 
 
 const uploadRoute = require("./routes/upload");
