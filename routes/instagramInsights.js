@@ -58,11 +58,13 @@ router.get("/insights", autenticarToken, async (req, res) => {
     try {
       dados = JSON.parse(text);
     } catch (jsonErr) {
-      console.error("❌ JSON malformado:", text);
-      return res.status(500).json({ erro: "Resposta malformada da Meta", detalhes: text });
+      console.error("❌ JSON inválido (ao tentar parsear):", text);
+      return res.status(500).json({
+        erro: "Resposta não estava em formato JSON",
+        corpo: text
+      });
     }
 
-    // Se a resposta tiver erro mesmo sendo JSON válido
     if (!resposta.ok) {
       console.error("❌ Erro da API do Instagram:", dados);
       return res.status(resposta.status).json({
