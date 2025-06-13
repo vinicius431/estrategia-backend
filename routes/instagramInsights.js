@@ -28,7 +28,7 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
-    const token = usuario.paginaAccessToken;
+    const token = usuario.instagramAccessToken;
     const instagramId = usuario.instagramBusinessId;
 
     console.log("🔐 JWT do usuário:", req.usuarioId);
