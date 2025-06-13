@@ -59,11 +59,16 @@ try {
 let text;
 try {
   text = await resposta.text();
-  console.log("📩 Resposta bruta da Meta:", text);
+  if (!text || !text.trim()) {
+    console.error("❌ A Meta respondeu vazio.");
+    return res.status(500).json({ erro: "Resposta vazia da Meta." });
+  }
+  console.log("📩 Resposta crua recebida da Meta:\n", text.slice(0, 1000)); // limitar para não travar log
 } catch (err) {
-  console.error("❌ Erro ao ler resposta da Meta:", err.message);
-  return res.status(500).json({ erro: "Erro ao ler resposta da Meta." });
+  console.error("❌ Erro ao tentar ler texto da Meta:", err.message);
+  return res.status(500).json({ erro: "Erro ao processar resposta da Meta." });
 }
+
 
     console.log("📩 Resposta bruta da Meta:", text);
 
