@@ -28,8 +28,11 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const usuario = await Usuario.findById(req.usuarioId);
     if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
 
+   
     const token = usuario.instagramAccessToken;
     const instagramId = usuario.instagramBusinessId;
+    console.log("⚙️ Iniciando chamada para Meta com token:", token ? token.slice(0, 15) + "..." : "TOKEN AUSENTE");
+    console.log("📎 Instagram Business ID:", instagramId || "ID AUSENTE");
 
     console.log("🔐 JWT do usuário:", req.usuarioId);
     console.log("➡️ Token de acesso (paginaAccessToken):", token);
@@ -41,7 +44,8 @@ router.get("/insights", autenticarToken, async (req, res) => {
     }
 
     const url = `https://graph.facebook.com/v19.0/${instagramId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
-    console.log("📡 Buscando insights do Instagram em:", url);
+    console.log("⏳ Chamando fetch na URL:", url);
+
 
     let resposta;
 try {
