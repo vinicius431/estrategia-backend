@@ -15,6 +15,9 @@ const { cloudinary, storage } = require("./config/cloudinary");
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
 const Usuario = require("./models/Usuario");
 
+const autenticarToken = require("./middleware/autenticarToken");
+const checarLimitePlano = require("./middleware/limitesPlano");
+
 
 const app = express(); // ✅ primeiro define o app
 
@@ -80,22 +83,7 @@ mongoose
   .then(() => console.log("🟢 Conectado ao MongoDB Atlas"))
   .catch((err) => console.error("🔴 Erro ao conectar no MongoDB:", err));
 
-// Auth Middleware
-function autenticarToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return res.status(401).json({ erro: "Token não fornecido" });
 
-  const token = authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ erro: "Token malformado" });
-
-  console.log("🧪 Token recebido:", token);
-
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ erro: "Token inválido" });
-    req.usuarioId = decoded.id;
-    next();
-  });
-}
 
 // Agendamento Model
 const AgendamentoSchema = new mongoose.Schema({
@@ -126,13 +114,14 @@ const TutorHistorico = mongoose.model("TutorHistorico", TutorSchema);
 app.post(
   "/agendamentos",
   autenticarToken,
+  checarLimitePlano("agendamento"),
   (req, res, next) => {
     upload.single("imagem")(req, res, function (err) {
       if (err) {
         console.error("❌ Erro no multer:", err);
         return res.status(400).json({ erro: err.message || "Erro no upload do arquivo." });
       }
-      next(); // vai para o próximo handler
+      next();
     });
   },
   async (req, res) => {
@@ -142,15 +131,15 @@ app.post(
 
       const { titulo, descricao, cta, hashtags, data, hora, status } = req.body;
 
-     let mediaUrl = null;
-if (req.file && req.file.path) {
-  mediaUrl = req.file.path;
-  console.log("✅ URL automática do Cloudinary:", mediaUrl);
-} else {
-  return res.status(400).json({ erro: "Nenhuma mídia foi enviada." });
-}
+      let mediaUrl = null;
+      if (req.file && req.file.path) {
+        mediaUrl = req.file.path;
+        console.log("✅ URL automática do Cloudinary:", mediaUrl);
+      } else {
+        return res.status(400).json({ erro: "Nenhuma mídia foi enviada." });
+      }
 
-
+      // Primeiro cria o agendamento
       const novo = new Agendamento({
         titulo,
         descricao,
@@ -164,6 +153,11 @@ if (req.file && req.file.path) {
       });
 
       await novo.save();
+
+      // Depois incrementa o contador do usuário e salva
+      req.usuario.agendamentosMes += 1;
+      await req.usuario.save();
+
       res.status(201).json({ mensagem: "Agendamento salvo com sucesso!" });
     } catch (err) {
       console.error("❌ Erro geral:", err);
@@ -171,6 +165,8 @@ if (req.file && req.file.path) {
     }
   }
 );
+
+
 
 
 app.get("/agendamentos", autenticarToken, async (req, res) => {
