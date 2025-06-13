@@ -43,8 +43,23 @@ router.get("/insights", autenticarToken, async (req, res) => {
     const url = `https://graph.facebook.com/v19.0/${instagramId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${token}`;
     console.log("📡 Buscando insights do Instagram em:", url);
 
-    const resposta = await fetch(url);
-    const text = await resposta.text();
+    let resposta;
+try {
+  resposta = await fetch(url);
+  console.log("📡 Fetch feita. Status:", resposta.status);
+} catch (err) {
+  console.error("❌ Erro de conexão com a Meta:", err.message);
+  return res.status(500).json({ erro: "Erro ao conectar com a API do Instagram." });
+}
+
+let text;
+try {
+  text = await resposta.text();
+  console.log("📩 Resposta bruta da Meta:", text);
+} catch (err) {
+  console.error("❌ Erro ao ler resposta da Meta:", err.message);
+  return res.status(500).json({ erro: "Erro ao ler resposta da Meta." });
+}
 
     console.log("📩 Resposta bruta da Meta:", text);
 
@@ -71,6 +86,7 @@ router.get("/insights", autenticarToken, async (req, res) => {
         erro: "Erro ao buscar insights do Instagram",
         detalhes: dados,
       });
+ 
     }
 
     console.log("✅ Dados de insights processados com sucesso.");
