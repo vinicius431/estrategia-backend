@@ -27,11 +27,11 @@ router.use((req, res, next) => {
 // 📤 POST para publicar no Instagram
 router.post("/instagram/publicar", async (req, res) => {
   console.log("🚀 A rota /instagram/publicar foi acionada");
-
   console.log("📍 Headers recebidos:", req.headers);
   console.log("📩 Chegou na rota com body:", req.body);
 
   try {
+    // 1️⃣ Valida token JWT
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       console.log("❌ Token não fornecido.");
@@ -47,38 +47,46 @@ router.post("/instagram/publicar", async (req, res) => {
       return res.status(404).json({ erro: "Usuário não encontrado." });
     }
 
-    console.log("👤 Usuário autenticado:", usuario.email || usuario._id);
+    // 2️⃣ Valida dados recebidos
+    const { legenda, midiaUrl, tipo, userAccessToken } = req.body;
+    console.log("📥 Dados recebidos:", { legenda, midiaUrl, tipo, userAccessToken });
 
-    if (!usuario.instagramAccessToken || !usuario.instagramBusinessId) {
-      console.log("⚠️ Instagram não está conectado para este usuário.");
-      return res.status(400).json({ erro: "Usuário sem Instagram conectado" });
+    if (!legenda || !midiaUrl || !tipo || !userAccessToken) {
+      return res.status(400).json({ erro: "Legenda, mídia, tipo e userAccessToken são obrigatórios." });
     }
 
-    const { legenda, midiaUrl, tipo } = req.body;
-    console.log("📥 Dados recebidos no backend:", { legenda, midiaUrl, tipo });
-
-    if (!legenda || !midiaUrl || !tipo) {
-      console.log("🚫 Falta legenda, midiaUrl ou tipo.");
-      return res.status(400).json({ erro: "Legenda, mídia e tipo são obrigatórios." });
+    // 3️⃣ Busca dados frescos da página e Instagram Business ID em tempo real
+    const pagesRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${userAccessToken}`);
+    const page = pagesRes.data.data[0];
+    if (!page) {
+      return res.status(400).json({ erro: "Nenhuma página encontrada." });
     }
 
-    // Etapa 1: Criar o container
-    const containerUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media`;
+    const pageAccessToken = page.access_token;
+    const pageInfoRes = await axios.get(`https://graph.facebook.com/v19.0/${page.id}?fields=connected_instagram_account{name}&access_token=${pageAccessToken}`);
+    const igBusinessId = pageInfoRes.data.connected_instagram_account?.id;
+
+    if (!igBusinessId) {
+      return res.status(400).json({ erro: "Instagram Business ID não encontrado para a página." });
+    }
+
+    // 4️⃣ Cria o container
+    const containerUrl = `https://graph.facebook.com/v19.0/${igBusinessId}/media`;
     const containerPayload = {
       caption: legenda,
       [tipo === "IMAGE" ? "image_url" : "video_url"]: midiaUrl,
-      access_token: usuario.instagramAccessToken,
+      access_token: pageAccessToken,
     };
 
     const containerRes = await axios.post(containerUrl, containerPayload);
     const creationId = containerRes.data.id;
     console.log("✅ Container criado com ID:", creationId);
 
-    // Etapa 2: Publicar o container
-    const publishUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media_publish`;
+    // 5️⃣ Publica o container
+    const publishUrl = `https://graph.facebook.com/v19.0/${igBusinessId}/media_publish`;
     const publishRes = await axios.post(publishUrl, {
       creation_id: creationId,
-      access_token: usuario.instagramAccessToken,
+      access_token: pageAccessToken,
     });
 
     console.log("✅ Post publicado com ID:", publishRes.data.id);
@@ -90,7 +98,6 @@ router.post("/instagram/publicar", async (req, res) => {
       console.error("📛 Erro da Graph API:");
       console.error("📎 Status:", erro.response.status);
       console.error("📩 Data:", erro.response.data);
-      console.error("🧾 Headers:", erro.response.headers);
     } else if (erro.request) {
       console.error("📡 Nenhuma resposta da API:", erro.request);
     } else {
