@@ -121,4 +121,59 @@ router.post("/instagram/publicar", autenticar, async (req, res) => {
   }
 });
 
+// 🔑 POST para renovar o token do usuário e atualizar tudo no banco
+router.post("/integracao/renovar-token", autenticar, async (req, res) => {
+  try {
+    const { userAccessToken } = req.body;
+
+    if (!userAccessToken) {
+      return res.status(400).json({ erro: "Token de usuário é obrigatório." });
+    }
+
+    // 1️⃣ Busca as páginas com o novo token do usuário
+    const pagesRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${userAccessToken}`);
+    const pages = pagesRes.data.data;
+    const page = pages[0];
+
+    if (!page || !page.access_token) {
+      return res.status(400).json({ erro: "Não foi possível obter o token da página." });
+    }
+
+    const pageId = page.id;
+    const pageAccessToken = page.access_token;
+
+    // 2️⃣ Busca o Instagram Business ID da página
+    const pageInfoRes = await axios.get(`https://graph.facebook.com/v19.0/${pageId}?fields=connected_instagram_account{name}&access_token=${pageAccessToken}`);
+    const instagramAccount = pageInfoRes.data.connected_instagram_account;
+
+    if (!instagramAccount || !instagramAccount.id) {
+      return res.status(400).json({ erro: "Nenhuma conta do Instagram conectada à página." });
+    }
+
+    const instagramBusinessId = instagramAccount.id;
+    const instagramName = instagramAccount.name;
+
+    // 3️⃣ Atualiza o banco do usuário com tudo novo
+    await Usuario.findByIdAndUpdate(
+      req.usuarioId,
+      {
+        instagramAccessToken: userAccessToken,
+        paginaAccessToken: pageAccessToken,
+        instagramBusinessId: instagramBusinessId,
+        instagramName: instagramName,
+        facebookPageId: pageId,
+        tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
+      },
+      { new: true, useFindAndModify: false }
+    );
+
+    return res.status(200).json({ mensagem: "Token renovado e salvo com sucesso!" });
+
+  } catch (err) {
+    console.error("Erro ao renovar token:", err.response?.data || err.message);
+    return res.status(500).json({ erro: "Erro ao renovar token." });
+  }
+});
+
+
 module.exports = router;
