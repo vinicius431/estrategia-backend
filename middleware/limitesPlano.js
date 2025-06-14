@@ -34,4 +34,3 @@ const checarLimitePlano = (tipo) => {
 };
 
 module.exports = checarLimitePlano;
-
