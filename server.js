@@ -58,17 +58,22 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 
-// ✅ MANTÉM OS require DO JEITO QUE ESTÃO:
+// ✅ 1) IMPORTA SUAS ROTAS
+const authRoutes = require("./routes/auth");
 const integracaoRoutes = require("./routes/integracao");
 const publicarInstagram = require("./routes/instagramPublicar");
 const instagramInsightsRoutes = require("./routes/instagramInsights");
 const uploadRoute = require("./routes/upload");
 
-// ✅ MAS AGORA PROTEGE COM O autenticarToken:
+// 🔑 Rotas públicas SEM token
+app.use("/auth", authRoutes);
+app.use("/upload", uploadRoute); // opcionalmente
+
+// 🔒 Rotas PROTEGIDAS
 app.use("/api", autenticarToken, integracaoRoutes);
 app.use("/api", autenticarToken, publicarInstagram);
 app.use("/api/instagram", autenticarToken, instagramInsightsRoutes);
-app.use("/", autenticarToken, uploadRoute);
+
 
 // Teste
 app.get("/", (req, res) => {
@@ -227,85 +232,7 @@ app.put("/agendamentos/:id", autenticarToken, upload.single("imagem"), async (re
 
 app.use(express.json());
 
-// Auth
-app.post("/auth/register", async (req, res) => {
-  const { nome, email, senha, telefone, nascimento, sexo } = req.body;
 
-  try {
-    const existe = await Usuario.findOne({ email });
-    if (existe) return res.status(400).json({ erro: "Email já cadastrado." });
-
-    const hash = await bcrypt.hash(senha, 10);
-
-    const novoUsuario = new Usuario({
-      nome,
-      email,
-      senha: hash,
-      telefone,
-      nascimento,
-      sexo,
-    });
-
-    await novoUsuario.save();
-
-    res.status(201).json({ mensagem: "Usuário criado com sucesso!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: "Erro ao registrar usuário." });
-  }
-});
-
-
-app.post("/auth/login", async (req, res) => {
-  const { email, senha } = req.body;
-  try {
-    const usuario = await Usuario.findOne({ email });
-    if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
-
-    const senhaConfere = await bcrypt.compare(senha, usuario.senha);
-    if (!senhaConfere) return res.status(401).json({ erro: "Senha inválida." });
-
-    const token = jwt.sign({ id: usuario._id }, JWT_SECRET, { expiresIn: "2d" });
-
-    res.json({
-      token,
-      usuario: {
-        nome: usuario.nome,
-        email: usuario.email,
-        plano: usuario.plano,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: "Erro ao fazer login." });
-  }
-});
-
-app.put("/auth/atualizar-plano", async (req, res) => {
-  const { email, novoPlano } = req.body;
-  try {
-    const usuario = await Usuario.findOneAndUpdate({ email }, { plano: novoPlano }, { new: true });
-    if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
-
-    res.json({ mensagem: "Plano atualizado com sucesso!", plano: usuario.plano });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: "Erro ao atualizar o plano." });
-  }
-});
-
-app.post("/auth/recarregar-plano", async (req, res) => {
-  const { email } = req.body;
-  try {
-    const usuario = await Usuario.findOne({ email });
-    if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
-
-    res.json({ plano: usuario.plano });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: "Erro ao recarregar plano." });
-  }
-});
 
 // IA: Gerar conteúdo
 app.post("/gerar-conteudo", async (req, res) => {
