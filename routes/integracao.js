@@ -111,7 +111,7 @@ router.post("/instagram/publicar", autenticar, async (req, res) => {
     const publishUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media_publish`;
     await axios.post(publishUrl, {
       creation_id: creationId,
-      access_token: usuario.instagramAccessToken,
+      access_token: usuario.paginaAccessToken,
     });
 
     return res.status(200).json({ mensagem: "✅ Publicado com sucesso no Instagram!" });
