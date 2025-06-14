@@ -18,7 +18,7 @@ const autenticar = async (req, res, next) => {
   }
 };
 
-// 🔄 POST para salvar integração
+// ✅ POST para salvar integração (sem buscar contas de novo)
 router.post("/integracao/instagram", autenticar, async (req, res) => {
   try {
     const { instagramAccessToken, instagramBusinessId, facebookPageId, instagramName } = req.body;
@@ -26,26 +26,15 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
     console.log("📦 Dados recebidos para salvar:", req.body);
     console.log("👤 Usuário ID:", req.usuarioId);
 
-    // ✅ Busca o token da página usando o token do usuário (instagramAccessToken)
-    const paginasRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${instagramAccessToken}`);
-    const paginas = paginasRes.data.data;
-
-    const pagina = paginas.find(p => p.id === facebookPageId);
-    if (!pagina || !pagina.access_token) {
-      return res.status(400).json({ erro: "Não foi possível obter o token da página." });
-    }
-
-    const paginaAccessToken = pagina.access_token;
-
-    // 💾 Salva os dados da integração
+    // Salva direto usando os dados do frontend
     await Usuario.findByIdAndUpdate(
       req.usuarioId,
       {
-        instagramAccessToken,
+        instagramAccessToken, // na prática: pageAccessToken
         instagramBusinessId,
         facebookPageId,
         instagramName,
-        paginaAccessToken,
+        paginaAccessToken: instagramAccessToken, // para manter o campo compatível
         tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
       },
       { new: true, useFindAndModify: false }
@@ -57,8 +46,6 @@ router.post("/integracao/instagram", autenticar, async (req, res) => {
     return res.status(500).json({ erro: "Erro interno ao salvar dados." });
   }
 });
-
-
 
 // 🔍 GET para verificar se o usuário já está integrado
 router.get("/integracao/instagram", autenticar, async (req, res) => {
@@ -175,5 +162,5 @@ router.post("/integracao/renovar-token", autenticar, async (req, res) => {
   }
 });
 
-
 module.exports = router;
+
