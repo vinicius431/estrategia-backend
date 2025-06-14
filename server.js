@@ -58,19 +58,17 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 
-
+// ✅ MANTÉM OS require DO JEITO QUE ESTÃO:
 const integracaoRoutes = require("./routes/integracao");
-app.use("/api", integracaoRoutes);
-
 const publicarInstagram = require("./routes/instagramPublicar");
-app.use("/api", publicarInstagram);
-
 const instagramInsightsRoutes = require("./routes/instagramInsights");
-app.use("/api/instagram", instagramInsightsRoutes);
-
-
 const uploadRoute = require("./routes/upload");
-app.use("/", uploadRoute);
+
+// ✅ MAS AGORA PROTEGE COM O autenticarToken:
+app.use("/api", autenticarToken, integracaoRoutes);
+app.use("/api", autenticarToken, publicarInstagram);
+app.use("/api/instagram", autenticarToken, instagramInsightsRoutes);
+app.use("/", autenticarToken, uploadRoute);
 
 // Teste
 app.get("/", (req, res) => {
