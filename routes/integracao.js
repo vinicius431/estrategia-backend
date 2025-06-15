@@ -18,23 +18,20 @@ const autenticar = async (req, res, next) => {
   }
 };
 
-// ✅ POST para salvar integração (sem buscar contas de novo)
+// ✅ POST para salvar integração (sem salvar IG ID fixo)
 router.post("/integracao/instagram", autenticar, async (req, res) => {
   try {
-    const { instagramAccessToken, instagramBusinessId, facebookPageId, instagramName } = req.body;
+    const { instagramAccessToken, facebookPageId, instagramName } = req.body;
 
     console.log("📦 Dados recebidos para salvar:", req.body);
     console.log("👤 Usuário ID:", req.usuarioId);
 
-    // Salva direto usando os dados do frontend
     await Usuario.findByIdAndUpdate(
       req.usuarioId,
       {
-        instagramAccessToken, // na prática: pageAccessToken
-        instagramBusinessId,
         facebookPageId,
+        paginaAccessToken: instagramAccessToken, // aqui é o pageAccessToken real
         instagramName,
-        paginaAccessToken: instagramAccessToken, // para manter o campo compatível
         tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
       },
       { new: true, useFindAndModify: false }
@@ -52,14 +49,13 @@ router.get("/integracao/instagram", autenticar, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuarioId);
 
-    if (!usuario || !usuario.instagramAccessToken || !usuario.instagramBusinessId) {
+    if (!usuario || !usuario.paginaAccessToken || !usuario.facebookPageId) {
       return res.status(200).json({ conectado: false });
     }
 
     return res.status(200).json({
       conectado: true,
-      instagramBusinessId: usuario.instagramBusinessId,
-      instagramAccessToken: usuario.instagramAccessToken,
+      facebookPageId: usuario.facebookPageId,
       paginaAccessToken: usuario.paginaAccessToken,
       instagramName: usuario.instagramName || "Perfil conectado ✅",
     });
@@ -69,93 +65,95 @@ router.get("/integracao/instagram", autenticar, async (req, res) => {
   }
 });
 
-// 📤 POST para publicar no Instagram
+// 📤 POST para publicar no Instagram (busca IG ID em tempo real)
 router.post("/instagram/publicar", autenticar, async (req, res) => {
   try {
-    const { legenda, midiaUrl } = req.body;
+    const { legenda, midiaUrl, tipo, userAccessToken } = req.body;
 
-    if (!legenda || !midiaUrl) {
-      return res.status(400).json({ erro: "Legenda e imagem são obrigatórios." });
+    if (!legenda || !midiaUrl || !tipo || !userAccessToken) {
+      return res.status(400).json({ erro: "Legenda, mídia, tipo e userAccessToken são obrigatórios." });
     }
 
     const usuario = await Usuario.findById(req.usuarioId);
-
-    if (!usuario.instagramAccessToken || !usuario.instagramBusinessId) {
+    if (!usuario || !usuario.facebookPageId) {
       return res.status(400).json({ erro: "Conta do Instagram não conectada." });
     }
 
-    // Criação do container
-    const containerUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media`;
-    const containerRes = await axios.post(containerUrl, {
-      image_url: midiaUrl,
-      caption: legenda,
-      access_token: usuario.instagramAccessToken,
-    });
+    // 🔑 Busca dados frescos
+    const pagesRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${userAccessToken}`);
+    const pages = pagesRes.data.data;
+    const page = pages.find(p => p.id === usuario.facebookPageId);
+    if (!page) {
+      return res.status(400).json({ erro: "Página do Facebook não encontrada." });
+    }
 
+    const pageAccessToken = page.access_token;
+
+    const pageInfoRes = await axios.get(`https://graph.facebook.com/v19.0/${page.id}?fields=connected_instagram_account{name}&access_token=${pageAccessToken}`);
+    const igAccount = pageInfoRes.data.connected_instagram_account;
+    if (!igAccount || !igAccount.id) {
+      return res.status(400).json({ erro: "Conta do Instagram não conectada à página." });
+    }
+
+    const igBusinessId = igAccount.id;
+
+    // ✅ Cria o container
+    const containerUrl = `https://graph.facebook.com/v19.0/${igBusinessId}/media`;
+    const containerPayload = {
+      caption: legenda,
+      [tipo === "IMAGE" ? "image_url" : "video_url"]: midiaUrl,
+      access_token: pageAccessToken,
+    };
+    const containerRes = await axios.post(containerUrl, containerPayload);
     const creationId = containerRes.data.id;
 
-    // Publicação do container
-    const publishUrl = `https://graph.facebook.com/v19.0/${usuario.instagramBusinessId}/media_publish`;
-    await axios.post(publishUrl, {
+    // ✅ Publica
+    const publishUrl = `https://graph.facebook.com/v19.0/${igBusinessId}/media_publish`;
+    const publishRes = await axios.post(publishUrl, {
       creation_id: creationId,
-      access_token: usuario.paginaAccessToken,
+      access_token: pageAccessToken,
     });
 
-    return res.status(200).json({ mensagem: "✅ Publicado com sucesso no Instagram!" });
+    return res.status(200).json({ mensagem: "✅ Publicado com sucesso!", postId: publishRes.data.id });
   } catch (err) {
     console.error("Erro ao publicar:", err.response?.data || err.message);
     return res.status(500).json({ erro: "Erro ao publicar no Instagram." });
   }
 });
 
-// 🔑 POST para renovar o token do usuário e atualizar tudo no banco
+// 🔑 POST para renovar token
 router.post("/integracao/renovar-token", autenticar, async (req, res) => {
   try {
     const { userAccessToken } = req.body;
-
     if (!userAccessToken) {
       return res.status(400).json({ erro: "Token de usuário é obrigatório." });
     }
 
-    // 1️⃣ Busca as páginas com o novo token do usuário
     const pagesRes = await axios.get(`https://graph.facebook.com/v19.0/me/accounts?access_token=${userAccessToken}`);
-    const pages = pagesRes.data.data;
-    const page = pages[0];
-
-    if (!page || !page.access_token) {
-      return res.status(400).json({ erro: "Não foi possível obter o token da página." });
+    const page = pagesRes.data.data[0];
+    if (!page) {
+      return res.status(400).json({ erro: "Nenhuma página encontrada." });
     }
 
     const pageId = page.id;
     const pageAccessToken = page.access_token;
 
-    // 2️⃣ Busca o Instagram Business ID da página
     const pageInfoRes = await axios.get(`https://graph.facebook.com/v19.0/${pageId}?fields=connected_instagram_account{name}&access_token=${pageAccessToken}`);
-    const instagramAccount = pageInfoRes.data.connected_instagram_account;
+    const igAccount = pageInfoRes.data.connected_instagram_account;
+    const instagramName = igAccount?.name || "";
 
-    if (!instagramAccount || !instagramAccount.id) {
-      return res.status(400).json({ erro: "Nenhuma conta do Instagram conectada à página." });
-    }
-
-    const instagramBusinessId = instagramAccount.id;
-    const instagramName = instagramAccount.name;
-
-    // 3️⃣ Atualiza o banco do usuário com tudo novo
     await Usuario.findByIdAndUpdate(
       req.usuarioId,
       {
-        instagramAccessToken: userAccessToken,
         paginaAccessToken: pageAccessToken,
-        instagramBusinessId: instagramBusinessId,
-        instagramName: instagramName,
         facebookPageId: pageId,
-        tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
+        instagramName,
+        tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
       },
       { new: true, useFindAndModify: false }
     );
 
     return res.status(200).json({ mensagem: "Token renovado e salvo com sucesso!" });
-
   } catch (err) {
     console.error("Erro ao renovar token:", err.response?.data || err.message);
     return res.status(500).json({ erro: "Erro ao renovar token." });
@@ -163,4 +161,3 @@ router.post("/integracao/renovar-token", autenticar, async (req, res) => {
 });
 
 module.exports = router;
-
