@@ -549,53 +549,7 @@ app.get("/auth/facebook", (req, res) => {
   res.redirect(redirectUrl);
 });
 
-app.post("/integracao/instagram", autenticarToken, async (req, res) => {
-  const { instagramAccessToken, instagramBusinessId, facebookPageId } = req.body;
 
-  if (!instagramAccessToken || !instagramBusinessId || !facebookPageId) {
-    return res.status(400).json({ erro: "Dados incompletos." });
-  }
-
-  try {
-    const usuario = await Usuario.findByIdAndUpdate(
-      req.usuarioId,
-      {
-        instagramAccessToken,
-        instagramBusinessId,
-        facebookPageId,
-        tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 dias
-      },
-      { new: true }
-    );
-
-    if (!usuario) {
-      return res.status(404).json({ erro: "Usuário não encontrado." });
-    }
-
-    res.status(200).json({ mensagem: "Instagram conectado com sucesso." });
-  } catch (err) {
-    console.error("Erro ao salvar dados do Instagram:", err);
-    res.status(500).json({ erro: "Erro ao salvar dados do Instagram." });
-  }
-});
-
-// ✅ Rota GET para verificar se o Instagram está conectado
-app.get("/integracao/instagram", autenticarToken, async (req, res) => {
-  try {
-    const usuario = await Usuario.findById(req.usuarioId);
-
-    if (!usuario) {
-      return res.status(404).json({ erro: "Usuário não encontrado." });
-    }
-
-    const { instagramAccessToken, instagramBusinessId } = usuario;
-
-    res.json({ instagramAccessToken, instagramBusinessId });
-  } catch (err) {
-    console.error("❌ Erro ao verificar integração do Instagram:", err);
-    res.status(500).json({ erro: "Erro ao verificar integração." });
-  }
-});
 
 
 // Start server
