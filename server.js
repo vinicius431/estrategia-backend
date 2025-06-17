@@ -299,7 +299,11 @@ app.post("/gerar-headline", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "Você é um estrategista criativo de redes sociais. Gere exatamente 5 headlines criativas e impactantes para posts no Instagram com base no tema. Responda apenas com as frases separadas por quebra de linha, sem numeração.",
+            content: `
+Você é um redator de Instagram.
+Gere EXATAMENTE 5 headlines curtas para o tema abaixo.
+Responda APENAS com as frases, uma por linha, SEM numeração, SEM explicações.
+            `.trim(),
           },
           {
             role: "user",
@@ -313,12 +317,18 @@ app.post("/gerar-headline", async (req, res) => {
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
 
+    console.log("🧾 Texto cru da IA em /gerar-headline:", texto);
+
     const titulos = texto
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => l.length > 0);
+      .filter((l) => l.length > 3);
 
-    if (!titulos.length) return res.status(400).json({ erro: "A IA não retornou nenhum título válido." });
+    console.log("🧾 Títulos extraídos:", titulos);
+
+    if (!titulos.length) {
+      return res.status(400).json({ erro: "A IA não retornou nenhum título válido. Tente um tema mais específico." });
+    }
 
     res.json({ titulos });
   } catch (err) {
@@ -326,6 +336,8 @@ app.post("/gerar-headline", async (req, res) => {
     res.status(500).json({ erro: "Erro ao gerar títulos com IA." });
   }
 });
+
+
 
 
 // IA: Gerar apenas DESCRIÇÃO (texto criativo)
@@ -348,7 +360,7 @@ app.post("/gerar-descricao", async (req, res) => {
           {
             role: "system",
             content:
-              "Você é um redator criativo para redes sociais. Gere 3 variações de descrições curtas e envolventes para uma publicação no Instagram com base no tema fornecido. Responda apenas com os parágrafos separados por quebra de linha, sem numeração.",
+              "Você é um redator criativo para redes sociais. Gere 5 variações de descrições curtas e envolventes para uma publicação no Instagram com base no tema fornecido. Responda apenas com os parágrafos separados por quebra de linha, sem numeração.",
           },
           {
             role: "user",
