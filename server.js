@@ -424,6 +424,7 @@ app.post("/gerar-hashtags", async (req, res) => {
 app.post("/gerar-tutor", async (req, res) => {
   const { tema } = req.body;
   if (!tema) return res.status(400).json({ erro: "Tema é obrigatório." });
+  
 
   try {
     const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -474,6 +475,8 @@ Hashtags:
 
     const data = await resposta.json();
     const texto = data.choices?.[0]?.message?.content || "";
+
+    console.log("🧾 Texto cru da IA:", texto);
 
     const headlines = (texto.match(/Headlines:\s*([\s\S]+?)Descrições:/i)?.[1] || "")
       .split("\n")
