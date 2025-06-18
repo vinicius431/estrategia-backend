@@ -100,7 +100,10 @@ const AgendamentoSchema = new mongoose.Schema({
   status: String,
   criadoEm: String,
 });
-const Agendamento = mongoose.model("Agendamento", AgendamentoSchema);
+
+// ✅ Protege contra Overwrite
+const Agendamento = mongoose.models.Agendamento || mongoose.model("Agendamento", AgendamentoSchema);
+
 
 // TutorHistorico Model
 const TutorSchema = new mongoose.Schema({
@@ -112,7 +115,7 @@ const TutorSchema = new mongoose.Schema({
   hashtags: [String],
   criadoEm: String,
 });
-const TutorHistorico = mongoose.model("TutorHistorico", TutorSchema);
+const TutorHistorico = mongoose.models.TutorHistorico || mongoose.model("TutorHistorico", TutorSchema);
 
 app.post(
   "/agendamentos",
