@@ -5,6 +5,26 @@ const Usuario = require("../models/Usuario");
 
 const router = express.Router();
 
+const mongoose = require("mongoose");
+
+const Agendamento =
+  mongoose.models.Agendamento ||
+  mongoose.model(
+    "Agendamento",
+    new mongoose.Schema({
+      titulo: String,
+      descricao: String,
+      cta: String,
+      hashtags: String,
+      data: String,
+      hora: String,
+      imagem: String,
+      status: String,
+      criadoEm: String,
+    })
+  );
+
+
 // ✅ Middleware RAW BODY (opcional)
 router.use((req, res, next) => {
   let data = "";
@@ -80,14 +100,12 @@ router.post("/instagram/publicar", async (req, res) => {
     console.log("✅ Post publicado com ID:", publishRes.data.id);
 
     // 5️⃣ Salva no banco de dados como "instagram"
-const Agendamento = require("../server").Agendamento || require("mongoose").model("Agendamento");
-
 const novoPost = new Agendamento({
   titulo: legenda,
   descricao: legenda,
   cta: "",
   hashtags: "",
-  data: new Date().toISOString().split('T')[0], // data de hoje
+  data: new Date().toISOString().split("T")[0], // data de hoje
   hora: new Date().toLocaleTimeString(), // hora de agora
   imagem: midiaUrl,
   status: "instagram",
@@ -97,13 +115,12 @@ const novoPost = new Agendamento({
 await novoPost.save();
 console.log("💾 Post salvo no MongoDB como status 'instagram'");
 
-    
+return res.status(200).json({
+  sucesso: true,
+  postId: publishRes.data.id,
+  mensagem: "✅ Publicado com sucesso no Instagram!"
+});
 
-    return res.status(200).json({
-      sucesso: true,
-      postId: publishRes.data.id,
-      mensagem: "✅ Publicado com sucesso no Instagram!"
-    });
 
   } catch (erro) {
     if (erro.response) {
