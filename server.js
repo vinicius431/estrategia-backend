@@ -182,6 +182,18 @@ app.get("/agendamentos", autenticarToken, async (req, res) => {
   }
 });
 
+// ✅ Nova rota: listar TUDO (agendamentos + Instagram)
+app.get("/posts", autenticarToken, async (req, res) => {
+  try {
+    const lista = await Agendamento.find().sort({ criadoEm: -1 });
+    res.json(lista);
+  } catch (err) {
+    console.error("❌ Erro ao buscar todos os posts:", err);
+    res.status(500).json({ erro: "Erro ao buscar os posts." });
+  }
+});
+
+
 app.delete("/agendamentos/:id", autenticarToken, async (req, res) => {
   try {
     const deletado = await Agendamento.findByIdAndDelete(req.params.id);

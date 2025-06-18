@@ -79,6 +79,26 @@ router.post("/instagram/publicar", async (req, res) => {
 
     console.log("✅ Post publicado com ID:", publishRes.data.id);
 
+    // 5️⃣ Salva no banco de dados como "instagram"
+const Agendamento = require("../server").Agendamento || require("mongoose").model("Agendamento");
+
+const novoPost = new Agendamento({
+  titulo: legenda,
+  descricao: legenda,
+  cta: "",
+  hashtags: "",
+  data: new Date().toISOString().split('T')[0], // data de hoje
+  hora: new Date().toLocaleTimeString(), // hora de agora
+  imagem: midiaUrl,
+  status: "instagram",
+  criadoEm: new Date().toISOString(),
+});
+
+await novoPost.save();
+console.log("💾 Post salvo no MongoDB como status 'instagram'");
+
+    
+
     return res.status(200).json({
       sucesso: true,
       postId: publishRes.data.id,
